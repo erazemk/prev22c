@@ -1,5 +1,5 @@
 prev22/gen
-prev22/*.class
+prev22/**/*.class
 prev22/*~
 prev22/prg/*.html
 prev22/prg/*.xml
