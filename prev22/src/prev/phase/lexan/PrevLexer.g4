@@ -7,10 +7,8 @@ lexer grammar PrevLexer;
 }
 
 @members {
-    @Override
-	public Token nextToken() {
-		return (Token) super.nextToken();
-	}
+	@Override
+	public Token nextToken() { return (Token) super.nextToken(); }
 }
 
 // Constants
@@ -72,9 +70,7 @@ COMMENT: '#'~[\n]*;
 // White space
 WHITESP: (' '|'\r'? '\n'|'\r') -> skip;
 TAB: '\t' {
-    if (true) {
-        setCharPositionInLine(getCharPositionInLine() + 7);
-    }
+	if (true) setCharPositionInLine(getCharPositionInLine() + 7);
 } -> skip;
 
 // Identifiers
@@ -83,54 +79,48 @@ IDENT: [a-zA-Z_][a-zA-Z0-9_]*;
 // Error handling
 ERR_PADDED_INT: [0][0-9]+ {
 	if (true) {
-		new Report.Error(new Location(
-				_tokenStartLine, _tokenStartCharPositionInLine,
-				getLine(), getCharPositionInLine()),
+		new Report.Error(new Location( _tokenStartLine,
+			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
 			"Lexical error: 0-padded integer"
 		);
 	}
 };
 ERR_LONG_CHAR: '\''([ -&]|[(-~])([ -&]|[(-~])+'\'' {
 	if (true) {
-		new Report.Error(new Location(
-			_tokenStartLine, _tokenStartCharPositionInLine,
-			getLine(), getCharPositionInLine()),
+		new Report.Error(new Location(_tokenStartLine,
+			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
 			"Lexical error: multiple characters inside single quote"
 		);
 	}
 };
 ERR_UNESCAPED_QUOTE: '\'''\'''\'' {
 	if (true) {
-		new Report.Error(new Location(
-			_tokenStartLine, _tokenStartCharPositionInLine,
-			getLine(), getCharPositionInLine()),
+		new Report.Error(new Location(_tokenStartLine,
+			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
 			"Lexical error: unescaped single quote"
 		);
 	}
 };
 ERR_UNTERMINATED_CHAR: '\''([ -&]|[(-~]|'\\\'')*('\n'|EOF) {
 	if (true) {
-		new Report.Error(new Location(
-			_tokenStartLine, _tokenStartCharPositionInLine,
-			getLine(), getCharPositionInLine()),
+		new Report.Error(new Location(_tokenStartLine,
+			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
 			"Lexical error: unterminated char"
 		);
 	}
 };
 ERR_UNTERMINATED_STR: '"'([ -!]|[#-~]|'\\"')*('\n'|EOF) {
-    if (true) {
-        new Report.Error(new Location(
-            _tokenStartLine, _tokenStartCharPositionInLine,
-            getLine(), getCharPositionInLine()),
-            "Lexical error: unterminated string"
-        );
+	if (true) {
+		new Report.Error(new Location(_tokenStartLine,
+			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
+			"Lexical error: unterminated string"
+		);
 	}
 };
 OTHER_ERR: . {
 	if (true) {
-		new Report.Error(new Location(
-			_tokenStartLine, _tokenStartCharPositionInLine,
-			getLine(), getCharPositionInLine()),
+		new Report.Error(new Location(_tokenStartLine,
+			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
 			"Unrecognised symbol " + getText()
 		);
 	}
