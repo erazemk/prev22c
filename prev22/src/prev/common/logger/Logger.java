@@ -1,13 +1,19 @@
 package prev.common.logger;
 
-import java.io.*;
-import java.util.*;
-import javax.xml.parsers.*;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.*;
-import javax.xml.transform.stream.*;
-import org.w3c.dom.*;
-import prev.common.report.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.ProcessingInstruction;
+import prev.common.report.Report;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+import java.util.EmptyStackException;
+import java.util.Stack;
 
 /**
  * A logger used for producing XML/XSL logs of compiler internal data
@@ -15,21 +21,29 @@ import prev.common.report.*;
  */
 public class Logger implements AutoCloseable {
 
-	/** The name of the XML file to be produced. */
+	/**
+	 * The name of the XML file to be produced.
+	 */
 	private final String xmlFileName;
 
-	/** The name of the relating XSL file (to be included in the XML header). */
+	/**
+	 * The name of the relating XSL file (to be included in the XML header).
+	 */
 	private final String xslFileName;
 
-	/** The entire XML document being constructed. */
+	/**
+	 * The entire XML document being constructed.
+	 */
 	private final Document doc;
 
-	/** The stack of the XML documents (used during construction). */
+	/**
+	 * The stack of the XML documents (used during construction).
+	 */
 	private final Stack<Element> elements = new Stack<Element>();
 
 	/**
 	 * Constructs a new logger.
-	 * 
+	 *
 	 * @param phaseName   The name of the phase being logged.
 	 * @param xmlFileName The name of the XML file to be produced.
 	 * @param xslFileName The name of the relating XSL file.
@@ -52,7 +66,7 @@ public class Logger implements AutoCloseable {
 
 		// Add XSL declaration.
 		ProcessingInstruction xsl = doc.createProcessingInstruction("xml-stylesheet",
-				"type=\"text/xsl\" href=\"" + this.xslFileName + "\"");
+			"type=\"text/xsl\" href=\"" + this.xslFileName + "\"");
 		doc.insertBefore(xsl, phase);
 	}
 
@@ -81,7 +95,7 @@ public class Logger implements AutoCloseable {
 	/**
 	 * Starts a new XML element (within the active XML element) and makes it active.
 	 * Only one XML element can be active at each moment.
-	 * 
+	 *
 	 * @param tagName The tag name of a new XML element.
 	 */
 	public void begElement(String tagName) {
@@ -108,7 +122,7 @@ public class Logger implements AutoCloseable {
 
 	/**
 	 * Adds an attribute to the active XML element.
-	 * 
+	 *
 	 * @param attrName  The name of an attribute.
 	 * @param attrValue The value of an attribute.
 	 */

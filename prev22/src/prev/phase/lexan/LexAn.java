@@ -14,7 +14,9 @@ import prev.phase.*;
  */
 public class LexAn extends Phase {
 
-	/** The ANTLR lexer that actually performs lexical analysis. */
+	/**
+	 * The ANTLR lexer that actually performs lexical analysis.
+	 */
 	public final PrevLexer lexer;
 
 	/**
@@ -45,8 +47,8 @@ public class LexAn extends Phase {
 		}
 
 		@Override
-		public Token create(Pair<TokenSource, CharStream> source, int type, String text, int channel, int start,
-				int stop, int line, int charPositionInLine) {
+		public Token create(Pair<TokenSource, CharStream> source, int type, String text,
+		                    int channel, int start, int stop, int line, int charPositionInLine) {
 			Token token = new Token(source, type, channel, start, stop);
 			token.log(logger);
 			return token;

@@ -12,15 +12,19 @@ import prev.phase.lexan.*;
  * Syntax analysis phase.
  */
 public class SynAn extends Phase {
-	
+
 	// === STATIC ===
 
-	/** The parse tree. */
+	/**
+	 * The parse tree.
+	 */
 	public static PrevParser.SourceContext tree;
-	
+
 	// ==============
-	
-	/** The ANTLR parser that actually performs syntax analysis. */
+
+	/**
+	 * The ANTLR parser that actually performs syntax analysis.
+	 */
 	public final PrevParser parser;
 
 	/**
@@ -32,16 +36,16 @@ public class SynAn extends Phase {
 		parser.removeErrorListeners();
 		parser.addErrorListener(new BaseErrorListener() {
 			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
-					int charPositionInLine, String msg, RecognitionException e) {
+			                        int charPositionInLine, String msg, RecognitionException e) {
 				throw new Report.Error(new Location(line, charPositionInLine),
-						"Unexpected symbol '" + ((Token) offendingSymbol).getText() + "'.");
+					"Unexpected symbol '" + ((Token) offendingSymbol).getText() + "'.");
 			}
 		});
 	}
 
 	/**
 	 * Logs a parse tree.
-	 * 
+	 *
 	 * @param tree Parse tree to be logged.
 	 */
 	public void log(ParseTree tree) {
