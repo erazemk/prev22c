@@ -99,7 +99,7 @@ ERROR_LONG_CHARACTER: '\''([ -&]|[(-~])([ -&]|[(-~])+'\'' {
 		);
 	}
 };
-ERROR_UNTERMINATED_CHAR: '\''([ -&]|[(-~]|'\\\'')*('\n'|EOF) {
+ERROR_UNESCAPED_QUOTE: '\'''\'''\'' {
 	if (true) {
 		new Report.Error(new Location(
 			_tokenStartLine, _tokenStartCharPositionInLine,
@@ -108,12 +108,21 @@ ERROR_UNTERMINATED_CHAR: '\''([ -&]|[(-~]|'\\\'')*('\n'|EOF) {
 		);
 	}
 };
+ERROR_UNTERMINATED_CHAR: '\''([ -&]|[(-~]|'\\\'')*('\n'|EOF) {
+	if (true) {
+		new Report.Error(new Location(
+			_tokenStartLine, _tokenStartCharPositionInLine,
+			getLine(), getCharPositionInLine()),
+			"Lexical error: unterminated char"
+		);
+	}
+};
 ERROR_UNTERMINATED_STRING: '"'([ -!]|[#-~]|'\\"')*('\n'|EOF) {
     if (true) {
         new Report.Error(new Location(
             _tokenStartLine, _tokenStartCharPositionInLine,
             getLine(), getCharPositionInLine()),
-            "Lexical error: unescaped double quote"
+            "Lexical error: unterminated string"
         );
 	}
 };
@@ -122,7 +131,7 @@ ERROR: . {
 		new Report.Error(new Location(
 			_tokenStartLine, _tokenStartCharPositionInLine,
 			getLine(), getCharPositionInLine()),
-			"Unidentified lexical error"
+			"Unrecognised symbol " + getText()
 		);
 	}
 };
