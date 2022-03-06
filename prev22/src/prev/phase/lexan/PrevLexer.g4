@@ -14,63 +14,63 @@ lexer grammar PrevLexer;
 }
 
 // Constants
-CONSTANT_NONE: 'none';
-CONSTANT_BOOLEAN: ('true'|'false');
-CONSTANT_INTEGER: ([1-9][0-9]*|'0');
-CONSTANT_CHARACTER: '\''([ -&]|[(-~]|'\\\'')'\'';
-CONSTANT_STRING: '"'([ -!]|[#-~]|'\\"')*'"';
-CONSTANT_POINTER: 'nil';
+CONST_NONE: 'none';
+CONST_BOOL: ('true'|'false');
+CONST_INT: ([1-9][0-9]*|'0');
+CONST_CHAR: '\''([ -&]|[(-~]|'\\\'')'\'';
+CONST_STR: '"'([ -!]|[#-~]|'\\"')*'"';
+CONST_PTR: 'nil';
 
 // Symbols
-LEFT_PARENTHESIS: '(';
-RIGHT_PARENTHESIS: ')';
-LEFT_CURLY_PARENTHESIS: '{';
-RIGHT_CURLY_PARENTHESIS: '}';
-LEFT_SQUARE_PARENTHESIS: '[';
-RIGHT_SQUARE_PARENTHESIS: ']';
+LPAREN: '(';
+RPAREN: ')';
+LBRACK: '{';
+RBRACK: '}';
+LBRACE: '[';
+RBRACE: ']';
 DOT: '.';
 COMMA: ',';
 COLON: ':';
 SEMICOLON: ';';
 AMPERSAND: '&';
-VERTICAL_LINE: '|';
-EXCLAMATION_POINT: '!';
-DOUBLE_EQUALS: '==';
-NOT_EQUALS: '!=';
-SMALLER_THAN: '<';
-GREATER_THAN: '>';
-LESS_THAN_OR_EQUALS: '<=';
-GREATER_THAN_OR_EQUALS: '>=';
+VERT_LINE: '|';
+BANG: '!';
+DEQU: '==';
+NEQU: '!=';
+LT: '<';
+GT: '>';
+LTE: '<=';
+GTE: '>=';
 STAR: '*';
 SLASH: '/';
 PERCENT: '%';
 PLUS: '+';
 MINUS: '-';
-EXPONENT: '^';
-EQUALS: '=';
+EXP: '^';
+EQU: '=';
 
 // Keywords
-KEYWORD_BOOL: 'bool';
-KEYWORD_CHAR: 'char';
-KEYWORD_DEL: 'del';
-KEYWORD_DO: 'do';
-KEYWORD_ELSE: 'else';
-KEYWORD_FUN: 'fun';
-KEYWORD_IF: 'if';
-KEYWORD_INT: 'int';
-KEYWORD_NEW: 'new';
-KEYWORD_THEN: 'then';
-KEYWORD_TYP: 'typ';
-KEYWORD_VAR: 'var';
-KEYWORD_VOID: 'void';
-KEYWORD_WHERE: 'where';
-KEYWORD_WHILE: 'while';
+KEY_BOOL: 'bool';
+KEY_CHAR: 'char';
+KEY_DEL: 'del';
+KEY_DO: 'do';
+KEY_ELSE: 'else';
+KEY_FUN: 'fun';
+KEY_IF: 'if';
+KEY_INT: 'int';
+KEY_NEW: 'new';
+KEY_THEN: 'then';
+KEY_TYP: 'typ';
+KEY_VAR: 'var';
+KEY_VOID: 'void';
+KEY_WHERE: 'where';
+KEY_WHILE: 'while';
 
 // Comments
 COMMENT: '#'~[\n]*;
 
 // White space
-WHITESPACE: (' '|'\r'? '\n'|'\r') -> skip;
+WHITESP: (' '|'\r'? '\n'|'\r') -> skip;
 TAB: '\t' {
     if (true) {
         setCharPositionInLine(getCharPositionInLine() + 7);
@@ -78,10 +78,10 @@ TAB: '\t' {
 } -> skip;
 
 // Identifiers
-IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
+IDENT: [a-zA-Z_][a-zA-Z0-9_]*;
 
 // Error handling
-ERROR_PADDED_INTEGER: [0][0-9]+ {
+ERR_PADDED_INT: [0][0-9]+ {
 	if (true) {
 		new Report.Error(new Location(
 				_tokenStartLine, _tokenStartCharPositionInLine,
@@ -90,7 +90,7 @@ ERROR_PADDED_INTEGER: [0][0-9]+ {
 		);
 	}
 };
-ERROR_LONG_CHARACTER: '\''([ -&]|[(-~])([ -&]|[(-~])+'\'' {
+ERR_LONG_CHAR: '\''([ -&]|[(-~])([ -&]|[(-~])+'\'' {
 	if (true) {
 		new Report.Error(new Location(
 			_tokenStartLine, _tokenStartCharPositionInLine,
@@ -99,7 +99,7 @@ ERROR_LONG_CHARACTER: '\''([ -&]|[(-~])([ -&]|[(-~])+'\'' {
 		);
 	}
 };
-ERROR_UNESCAPED_QUOTE: '\'''\'''\'' {
+ERR_UNESCAPED_QUOTE: '\'''\'''\'' {
 	if (true) {
 		new Report.Error(new Location(
 			_tokenStartLine, _tokenStartCharPositionInLine,
@@ -108,7 +108,7 @@ ERROR_UNESCAPED_QUOTE: '\'''\'''\'' {
 		);
 	}
 };
-ERROR_UNTERMINATED_CHAR: '\''([ -&]|[(-~]|'\\\'')*('\n'|EOF) {
+ERR_UNTERMINATED_CHAR: '\''([ -&]|[(-~]|'\\\'')*('\n'|EOF) {
 	if (true) {
 		new Report.Error(new Location(
 			_tokenStartLine, _tokenStartCharPositionInLine,
@@ -117,7 +117,7 @@ ERROR_UNTERMINATED_CHAR: '\''([ -&]|[(-~]|'\\\'')*('\n'|EOF) {
 		);
 	}
 };
-ERROR_UNTERMINATED_STRING: '"'([ -!]|[#-~]|'\\"')*('\n'|EOF) {
+ERR_UNTERMINATED_STR: '"'([ -!]|[#-~]|'\\"')*('\n'|EOF) {
     if (true) {
         new Report.Error(new Location(
             _tokenStartLine, _tokenStartCharPositionInLine,
@@ -126,7 +126,7 @@ ERROR_UNTERMINATED_STRING: '"'([ -!]|[#-~]|'\\"')*('\n'|EOF) {
         );
 	}
 };
-ERROR: . {
+OTHER_ERR: . {
 	if (true) {
 		new Report.Error(new Location(
 			_tokenStartLine, _tokenStartCharPositionInLine,
