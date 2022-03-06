@@ -13,66 +13,11 @@ lexer grammar PrevLexer;
 	}
 }
 
-// All non-ASCII characters
-// ERROR_NON_ASCII_CHARACTER: ~[#][\u0000-\u007F] {
-// 	if (true) {
-// 		new Report.Error(new Location(
-// 				_tokenStartLine, _tokenStartCharPositionInLine,
-// 				getLine(), getCharPositionInLine()),
-// 			"Lexical error: non-ASCII character"
-// 		);
-// 	}
-// };
-
-/*
- * Constants
- */
+// Constants
 CONSTANT_NONE: 'none';
 CONSTANT_BOOLEAN: ('true'|'false');
-
-// Integer rules
-ERROR_PADDED_INTEGER: [0][0-9]+ {
-	if (true) {
-		new Report.Error(new Location(
-				_tokenStartLine, _tokenStartCharPositionInLine,
-				getLine(), getCharPositionInLine()),
-			"Lexical error: 0-padded integer"
-		);
-	}
-};
 CONSTANT_INTEGER: ([1-9][0-9]*|'0');
-
-// Character rules
-ERROR_UNESCAPED_QUOTE: '\'''\'''\'' {
-	if (true) {
-		new Report.Error(new Location(
-			_tokenStartLine, _tokenStartCharPositionInLine,
-			getLine(), getCharPositionInLine()),
-			"Lexical error: unescaped single quote"
-		);
-	}
-};
-ERROR_LONG_CHARACTER: '\''([ -&]|[(-~])([ -&]|[(-~])+'\'' {
-	if (true) {
-		new Report.Error(new Location(
-			_tokenStartLine, _tokenStartCharPositionInLine,
-			getLine(), getCharPositionInLine()),
-			"Lexical error: multiple characters inside single quote"
-		);
-	}
-};
 CONSTANT_CHARACTER: '\''([ -&]|[(-~]|'\\\'')'\'';
-
-// String rules
-ERROR_UNESCAPED_DOUBLE_QUOTE: '"'.['\\"'].'"' {
-		if (true) {
-		new Report.Error(new Location(
-			_tokenStartLine, _tokenStartCharPositionInLine,
-			getLine(), getCharPositionInLine()),
-			"Lexical error: unescaped double quote"
-		);
-	}
-};
 CONSTANT_STRING: '"'([ -!]|[#-~]|'\\"')*'"';
 CONSTANT_POINTER: 'nil';
 
@@ -125,12 +70,53 @@ KEYWORD_WHILE: 'while';
 COMMENT: '#'~[\n]*;
 
 // White space
-WHITESPACE: ('\t'|'        '|' '|'\r'? '\n'|'\r') -> skip;
+WHITESPACE: (' '|'\r'? '\n'|'\r') -> skip;
+TAB: '\t' {
+    if (true) {
+        setCharPositionInLine(getCharPositionInLine() + 7);
+    }
+} -> skip;
 
 // Identifiers
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 
-// Other error handling
+// Error handling
+ERROR_PADDED_INTEGER: [0][0-9]+ {
+	if (true) {
+		new Report.Error(new Location(
+				_tokenStartLine, _tokenStartCharPositionInLine,
+				getLine(), getCharPositionInLine()),
+			"Lexical error: 0-padded integer"
+		);
+	}
+};
+ERROR_LONG_CHARACTER: '\''([ -&]|[(-~])([ -&]|[(-~])+'\'' {
+	if (true) {
+		new Report.Error(new Location(
+			_tokenStartLine, _tokenStartCharPositionInLine,
+			getLine(), getCharPositionInLine()),
+			"Lexical error: multiple characters inside single quote"
+		);
+	}
+};
+ERROR_UNTERMINATED_CHAR: '\''([ -&]|[(-~]|'\\\'')*('\n'|EOF) {
+	if (true) {
+		new Report.Error(new Location(
+			_tokenStartLine, _tokenStartCharPositionInLine,
+			getLine(), getCharPositionInLine()),
+			"Lexical error: unescaped single quote"
+		);
+	}
+};
+ERROR_UNTERMINATED_STRING: '"'([ -!]|[#-~]|'\\"')*('\n'|EOF) {
+    if (true) {
+        new Report.Error(new Location(
+            _tokenStartLine, _tokenStartCharPositionInLine,
+            getLine(), getCharPositionInLine()),
+            "Lexical error: unescaped double quote"
+        );
+	}
+};
 ERROR: . {
 	if (true) {
 		new Report.Error(new Location(
