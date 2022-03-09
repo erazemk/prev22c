@@ -23,7 +23,8 @@ options {
 	tokenVocab = PrevLexer;
 }
 
-source      : program EOF;
+source      : program EOF
+            ;
 
 program     : declaration*;
 
@@ -43,7 +44,7 @@ expression  : CONST_NONE | CONST_BOOL | CONST_INT | CONST_CHAR | CONST_STR
                     | CONST_PTR // Constant expression
             | IDENT // Variable access
             | IDENT LPAREN (expression (COMMA expression)*)? RPAREN // Function call
-            | LBRACK statement SEMICOLON (statement SEMICOLON)? RBRACK // Compound expression
+            | LBRACK statement SEMICOLON (statement SEMICOLON)* RBRACK // Compound expression
             | LPAREN expression COLON type RPAREN // Typecast expression
             | LPAREN expression RPAREN // Enclosed expression
             | expression (LBRACE expression RBRACE | EXP | DOT IDENT) // Postfix operators
