@@ -7,7 +7,7 @@ public interface Loggable {
 
 	/**
 	 * Produces a log of this object.
-	 *
+	 * 
 	 * @param logger The logger a log of this object is dumped to.
 	 */
 	public void log(Logger logger);

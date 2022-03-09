@@ -34,7 +34,7 @@ public class Location implements Locatable, Loggable {
 	/**
 	 * Constructs a new location if the position of the first and the last
 	 * characters are given.
-	 *
+	 * 
 	 * @param begLine   The line number of the first character of the specified part
 	 *                  of the source file.
 	 * @param begColumn The column number of the first character of the specified
@@ -53,7 +53,7 @@ public class Location implements Locatable, Loggable {
 
 	/**
 	 * Constructs a new location if the position of a single character is given.
-	 *
+	 * 
 	 * @param line   The line number of the character of the specified part of the
 	 *               source file.
 	 * @param column The column number of the character of the specified part of the
@@ -66,26 +66,26 @@ public class Location implements Locatable, Loggable {
 	/**
 	 * Constructs a new location given an object relating to a part of a source
 	 * file.
-	 *
+	 * 
 	 * @param that An object relating to a part of a source file.
 	 */
 	public Location(Locatable that) {
 		this(//
-			that == null ? 0 : that.location().begLine, that == null ? 0 : that.location().begColumn,
-			that == null ? 0 : that.location().endLine, that == null ? 0 : that.location().endColumn);
+				that == null ? 0 : that.location().begLine, that == null ? 0 : that.location().begColumn,
+				that == null ? 0 : that.location().endLine, that == null ? 0 : that.location().endColumn);
 	}
 
 	/**
 	 * Constructs a new location given two objects relating to parts of a source
 	 * file.
-	 *
+	 * 
 	 * @param beg An object relating to the beginning of part of a source file.
 	 * @param end An object relating to the end of part of a source file.
 	 */
 	public Location(Locatable beg, Locatable end) {
 		this(//
-			beg == null ? 0 : beg.location().begLine, beg == null ? 0 : beg.location().begColumn,
-			end == null ? 0 : end.location().endLine, end == null ? 0 : end.location().endColumn);
+				beg == null ? 0 : beg.location().begLine, beg == null ? 0 : beg.location().begColumn,
+				end == null ? 0 : end.location().endLine, end == null ? 0 : end.location().endColumn);
 	}
 
 	@Override

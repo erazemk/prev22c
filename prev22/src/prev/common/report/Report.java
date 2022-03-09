@@ -5,14 +5,12 @@ package prev.common.report;
  */
 public class Report {
 
-	/**
-	 * Counter of information messages printed out.
-	 */
+	/** Counter of information messages printed out. */
 	private static int numOfInfos = 0;
 
 	/**
 	 * Returns the number of information messages printed out.
-	 *
+	 * 
 	 * @return The number of information messages printed out.
 	 */
 	public static int numOfInfos() {
@@ -21,7 +19,7 @@ public class Report {
 
 	/**
 	 * Prints out an information message.
-	 *
+	 * 
 	 * @param message The information message to be printed.
 	 */
 	public static void info(String message) {
@@ -33,7 +31,7 @@ public class Report {
 	/**
 	 * Prints out an information message relating to the specified part of the
 	 * source file.
-	 *
+	 * 
 	 * @param location Location the information message is related to.
 	 * @param message  The information message to be printed.
 	 */
@@ -44,14 +42,12 @@ public class Report {
 		System.out.println(message);
 	}
 
-	/**
-	 * Counter of warnings printed out.
-	 */
+	/** Counter of warnings printed out. */
 	private static int numOfWarnings = 0;
 
 	/**
 	 * Returns the number of warnings printed out.
-	 *
+	 * 
 	 * @return The number of warnings printed out.
 	 */
 	public static int numOfWarnings() {
@@ -60,7 +56,7 @@ public class Report {
 
 	/**
 	 * Prints out a warning.
-	 *
+	 * 
 	 * @param message The warning message.
 	 */
 	public static void warning(String message) {
@@ -71,7 +67,7 @@ public class Report {
 
 	/**
 	 * Prints out a warning relating to the specified part of the source file.
-	 *
+	 * 
 	 * @param location Location the warning message is related to.
 	 * @param message  The warning message to be printed.
 	 */
@@ -84,7 +80,7 @@ public class Report {
 
 	/**
 	 * An error.
-	 * <p>
+	 * 
 	 * Thrown whenever the program reaches a situation where any further computing
 	 * makes no sense any more because of the erroneous input.
 	 */
@@ -93,7 +89,7 @@ public class Report {
 
 		/**
 		 * Constructs a new error.
-		 *
+		 * 
 		 * @param message The error message.
 		 */
 		public Error(String message) {
@@ -104,7 +100,7 @@ public class Report {
 
 		/**
 		 * Constructs a new error relating to the specified part of the source file.
-		 *
+		 * 
 		 * @param location Location the error message is related to.
 		 * @param message  The error message.
 		 */
@@ -118,7 +114,7 @@ public class Report {
 
 	/**
 	 * An internal error.
-	 * <p>
+	 * 
 	 * Thrown whenever the program encounters internal error.
 	 */
 	@SuppressWarnings("serial")
