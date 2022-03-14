@@ -65,12 +65,12 @@ KEY_WHERE: 'where';
 KEY_WHILE: 'while';
 
 // Comments
-COMMENT: '#'~[\n]*;
+COMMENT: '#'~[\n]* -> skip;
 
 // White space
 WHITESP: (' '|'\r'? '\n'|'\r') -> skip;
 TAB: '\t' {
-	if (true) setCharPositionInLine(getCharPositionInLine() + 7);
+	if (true) setCharPositionInLine((getCharPositionInLine() / 8) * 8 + 8);
 } -> skip;
 
 // Identifiers
