@@ -18,10 +18,6 @@ help:
 	@echo "    help                                    Print this message"
 	@echo "    test file=<file> (phase=<phase>)        Run the specified test"
 	@echo "    zip name=<name>                         Create a zip archive"
-	@echo
-	@echo "Available phases:"
-	@echo "    lexan    Lexical analysis (PrevLexer)"
-	@echo "    synan    Syntactical analysis (PrevParser)"
 
 test:
     ifdef file
