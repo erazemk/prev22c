@@ -7,3 +7,4 @@ prev22/src/prev/phase/**/*.interp
 prev22/src/prev/phase/**/*.tokens
 prev22/src/prev/phase/**/.antlr
 prev22/src/prev/phase/**/Prev*.java
+*.zip
