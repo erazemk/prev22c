@@ -9,7 +9,7 @@ var zz: int
 var z : int
 
 fun main(k : int) : int = {
-   
+
     i = 0;
     while i < 10 do
 	x = i + 1 * 3

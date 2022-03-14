@@ -1,5 +1,9 @@
-fun funkcija(param : int) : void = h where {
-	var j : h
-}
+#fun funkcija(param : int) : void = h where {
+#	var j : h
+#}
+
+fun x() : void= neki where {
+    typ id = j
+   }
 
 fun j() : int = -12345 + 10 * 3 % 12 / 10 < a[10 + 2]
