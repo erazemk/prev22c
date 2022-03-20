@@ -3,11 +3,11 @@ phase = all
 all: help
 
 clean:
-	$(MAKE) -C prev22 clean
+	$(MAKE) -s -C prev22 clean
 	rm -rf prev22/gen prev22/src/prev/phase/**/.antlr
 
 compile:
-	$(MAKE) -C prev22 all
+	$(MAKE) -s -C prev22 all
 
 help:
 	@echo "Usage: make [clean|compile|test|zip] (arguments)"
@@ -21,8 +21,8 @@ help:
 
 test:
     ifdef file
-		$(MAKE) -C prev22 clean all
-		$(MAKE) -C prev22/prg "$(file)" PHASE="$(phase)"
+		$(MAKE) -s -C prev22 clean all
+		$(MAKE) -s -C prev22/prg "$(file)" PHASE="$(phase)"
     else
 		@echo "Test file must be specified!"
 		@echo "Usage: make test file=<file> (phase=<phase>)"
@@ -30,7 +30,7 @@ test:
 
 zip:
     ifdef name
-		$(MAKE) -C prev22 clean
+		$(MAKE) -s -C prev22 clean
 		rm -rf prev22/gen prev22/src/prev/phase/**/.antlr
 		zip -r "$(name).zip" prev22 -x prev22/prev22.iml -x prev22/prg/*.p22
     else
