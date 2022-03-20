@@ -54,13 +54,14 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 				throw new Report.Error(funDecl, "Semantic error: function '" + funDecl.name + "' has already been declared");
 			}
 		} else if (mode == Mode.BODY) {
-			funDecl.pars.accept(this, Mode.BODY);
+
+			if (funDecl.pars != null) funDecl.pars.accept(this, Mode.BODY);
 			funDecl.type.accept(this, Mode.BODY);
 
 			symbTable.newScope();
 
-			funDecl.pars.accept(this, Mode.HEAD);
-			funDecl.expr.accept(this, Mode.BODY);
+			if (funDecl.pars != null) funDecl.pars.accept(this, Mode.HEAD);
+			if (funDecl.expr != null) funDecl.expr.accept(this, Mode.BODY);
 
 			symbTable.oldScope();
 		}
