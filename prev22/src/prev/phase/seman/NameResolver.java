@@ -123,7 +123,7 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 				throw new Report.Error(callExpr, "Semantic error: could not find call expression '" + callExpr.name + "'");
 			}
 
-			callExpr.args.accept(this, Mode.BODY);
+			if (callExpr.args != null) callExpr.args.accept(this, Mode.BODY);
 		}
 
 		return null;
