@@ -51,7 +51,7 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 			try {
 				symbTable.ins(funDecl.name, funDecl);
 			} catch (SymbTable.CannotInsNameException e) {
-				throw new Report.Error(funDecl, "Semantic error: function '" + funDecl.name + "' has already been declared");
+				throw new Report.Error(funDecl, "Semantic error: '" + funDecl.name + "' has already been declared");
 			}
 		} else if (mode == Mode.BODY) {
 
@@ -75,7 +75,7 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 			try {
 				symbTable.ins(parDecl.name, parDecl);
 			} catch (SymbTable.CannotInsNameException e) {
-				throw new Report.Error(parDecl, "Semantic error: function argument '" + parDecl.name + "' has already been declared");
+				throw new Report.Error(parDecl, "Semantic error: '" + parDecl.name + "' has already been declared");
 			}
 		} else if (mode == Mode.BODY) {
 			parDecl.type.accept(this, Mode.BODY);
@@ -90,7 +90,7 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 			try {
 				symbTable.ins(typeDecl.name, typeDecl);
 			} catch (SymbTable.CannotInsNameException e) {
-				throw new Report.Error(typeDecl, "Semantic error: type '" + typeDecl.name + "' has already been declared");
+				throw new Report.Error(typeDecl, "Semantic error: '" + typeDecl.name + "' has already been declared");
 			}
 		} else if (mode == Mode.BODY) {
 			typeDecl.type.accept(this, Mode.BODY);
@@ -105,7 +105,7 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 			try {
 				symbTable.ins(varDecl.name, varDecl);
 			} catch (SymbTable.CannotInsNameException e) {
-				throw new Report.Error(varDecl, "Semantic error: variable '" + varDecl.name + "' has already been declared");
+				throw new Report.Error(varDecl, "Semantic error: '" + varDecl.name + "' has already been declared");
 			}
 		} else if (mode == Mode.BODY) {
 			varDecl.type.accept(this, Mode.BODY);

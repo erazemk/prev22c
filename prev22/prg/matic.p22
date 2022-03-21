@@ -1,0 +1,27 @@
+var i:int
+typ i = char
+var x:int
+var s : int
+fun f (c : char, i : int, b : bool) : char = { s = 3;
+    if s < i then
+        f(12, s, true)
+    else
+        i = 4;
+ }
+typ R = {a:int, b:char}
+fun g () : { i : R, x : char} = {
+    m where { var m : bool} ;
+    f(3) where { fun f ( k : int) : int };
+    }
+
+
+typ U = { x : int, y : int}
+var v : { x : int, y : int}
+typ identif = ( [f('c', i, false)] char)
+var v3 : ^ identif
+
+fun expressions () : void = {
+    new i;
+    i = (s : U);
+    if (i < 6) then i = v.x else i = v.x;
+    }
