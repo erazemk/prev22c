@@ -1,0 +1,168 @@
+# -----
+# TYPES
+# -----
+
+# Atom types
+typ crna_lukna = void
+typ znak = char
+typ stevilo = int
+typ pravilnost = bool
+
+# Array types
+typ tabela_znakov = [42]char
+typ tabela_rec = [2]{ a : int, b : ^char }
+# Array errors
+# typ prazna_tabela = [0]bool
+# typ non_const_size = [5 + 3]char
+# typ negativna_velikost = [42]bool
+# typ prevelika_tabela = [123412341241231241212344]char
+# typ neki = ["helo"]char
+# typ void_tabela = [5]void
+# typ tabela_void = [+42]crna_lukna
+# typ is_it_void = [1]crna_lukna2
+
+# Ptr types
+typ kazalec_na_kazalec = ^^char
+typ kazalec_na_tabelo_kazalcev = ^[42]^bool
+
+# Record types
+typ osebek = oseba
+typ oseba = { ime: ^char, priimek : ^char, starost : int }
+typ Node = { value : int, left : ^Node, right : ^Node }
+# Record errors
+# typ oseba_void = { ime: ^char, priimek : crna_lukna2 }
+# typ void_record = { empty : void }
+# typ redeclared = { a : int, c: bool, a : char }
+# typ cyclic = { a : cyclic2 } typ cyclic2 = cyclic
+# typ cycle = { a : cycle }
+
+
+# Name types
+typ integer = stevilo
+typ personel = ^person
+typ person = oseba
+typ stevilo1 = stevilo2
+typ stevilo2 = ^stevilo1
+# Name errors
+# typ type1 = type2 typ type2 = type3 typ type3 = type1
+# typ guy = bostjan
+
+# ---------
+# VARIABLES
+# ---------
+var i : int
+var j : stevilo
+var bostjan : oseba
+var osebe : [10]person
+# Variable errors
+# var void_var : void
+# var void_var2 : crna_lukna2
+# var type_expected : bostjan
+# var type_notdeclared : oseba__
+
+typ crna_lukna2 = crna_lukna
+
+# ---------
+# FUNCTIONS
+# ---------
+fun f() : void
+fun g(a : int) : int
+fun void_ret() : crna_lukna2
+fun visina_osebe(os : ^oseba) : stevilo
+fun get_42() : int = 42
+var a : int
+fun get_ptr() : ^int = ^a
+fun get_par(a : char) : char = a
+fun get_fun_call() : int = get_42()
+fun get_age() : int = bostjan.starost
+# Function errors
+# fun ill_return() : oseba
+# fun ill_par(os : oseba) : int
+# fun wrong_ret() : int = true
+
+var void_pointer : ^void
+var name : ^char
+var status : bool
+var key : char
+var age : int
+var cifra : stevilo
+var flag : pravilnost
+var int_ptr : ^int
+var bobi : person
+
+typ node = { i : int, l : ^node, r : ^node }
+typ node2 = { i : int, l : ^node2, r : ^node3 }
+typ node3 = { i : int, l : ^node2, r : ^node3 }
+var tree : node
+var tree2 : node2
+
+# -----------
+# EXPRESSIONS
+# -----------
+fun main(argc : int, argv : ^[128]char) : int = {
+    int_ptr = (new 5: ^int);
+
+    void_pointer = nil;
+    name = "Hello world!";
+    status = true | false;
+    key = 'h';
+    age = 42;
+
+    status = !status;
+    age = -age;
+
+    status = (a / b > (d : int) & c) where {
+        var a : int
+        var b : int
+        var c : bool
+        var d : char
+    };
+
+    flag = ^cifra < ^age;
+    age = int_ptr^ + cifra % 3;
+
+    del int_ptr;
+
+    key = argv^[0];
+    bostjan.ime = "Bostjan";
+    bostjan.priimek = "Slivnik";
+    bostjan.starost = (get_42());
+
+    if bostjan.starost % 2 == 0 then {
+        bostjan.ime = "Bostjan sodi";
+    } else {
+        bostjan.ime = "Bostjan lihi";
+    };
+
+    while bostjan.starost != 1 do {
+        if bostjan.starost % 2 == 0 then {
+            bostjan.starost = bostjan.starost / 2;
+        } else {
+            bostjan.starost = 3 * bostjan.starost + 1;
+        };
+    };
+
+    bobi.ime = "Bobi";
+    bobi.priimek = "Frnikula";
+
+    flag = ^bostjan == ^bobi;
+    flag = ^tree == ^tree2;
+
+
+
+    # Errors
+    # age = (flag : int);
+    # 5 = age;
+    # age = status + key;
+    # status = age != key;
+    # if age then age = 0 else age = 1;
+    # while age do age = age - 1;
+    # bobi = bostjan;
+    # status = get_age();
+    # flag = ^bostjan == age;
+    # 5 = age;
+    # age + bobi.starost = 42;
+
+    0;
+}
+
