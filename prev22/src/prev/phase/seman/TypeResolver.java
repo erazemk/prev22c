@@ -95,8 +95,6 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 			type = SemAn.isType.get(((AstVarDecl) decl).type);
 		} else if (decl instanceof AstParDecl) {
 			type = SemAn.isType.get(((AstParDecl) decl).type);
-		} else if (decl instanceof AstCompDecl) {
-			type = SemAn.isType.get(((AstCompDecl) decl).type);
 		} else {
 			throw new Report.Error(nameExpr, "Type error: you can only declare variables, parameters or records components");
 		}
