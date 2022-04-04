@@ -16,7 +16,7 @@ public class SemName extends SemType {
 
 	/**
 	 * Constructs a new named type.
-	 * 
+	 *
 	 * @param name The type this named type represents.
 	 */
 	public SemName(String name) {
@@ -25,8 +25,8 @@ public class SemName extends SemType {
 
 	/**
 	 * Defines the type this named type represents.
-	 * 
-	 * @param typeThe type this named type represents.
+	 *
+	 * @param type The type this named type represents.
 	 */
 	public void define(SemType type) {
 		if (this.type != null)
@@ -36,7 +36,7 @@ public class SemName extends SemType {
 
 	/**
 	 * Returns the type this named type represents.
-	 * 
+	 *
 	 * @return The type this named type represents.
 	 */
 	public SemType type() {
@@ -45,7 +45,7 @@ public class SemName extends SemType {
 
 	/**
 	 * Returns the actual type (not a synonym).
-	 * 
+	 *
 	 * @return The actual type (not a synonym).
 	 */
 	@Override
