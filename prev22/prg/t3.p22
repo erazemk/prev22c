@@ -1,0 +1,8 @@
+var niz : ^char
+fun f (a : int) : void = {
+	niz = "jaz sem \"niz\"";
+	g(5,6,7) where {
+		var b : int
+		fun g(a : int, b : int, c: int) : void = none
+	};
+}

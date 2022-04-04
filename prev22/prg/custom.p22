@@ -1,0 +1,4 @@
+var niz : ^char
+fun f () : void = {
+  niz = "text with \" escaped \" quotes";
+}
