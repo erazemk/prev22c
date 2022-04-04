@@ -19,47 +19,68 @@ import prev.data.ast.visitor.*;
  */
 public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 
+	// Two passes
 	public enum Mode {
-		HEAD, BODY
+		HEAD, // For adding labels (left values) to symbTable
+		BODY // For checking if all right values are defined on the left (so in symbTable)
 	}
 
+	// Global symbol table to check mismatches in declarations
 	private final SymbTable symbTable = new SymbTable();
 
-	@Override
-	public Object visit(AstTrees<? extends AstTree> trees, Mode mode) {
-
-		if (mode == null) {
-			for (AstTree t : trees) {
-				if (t != null) t.accept(this, Mode.HEAD);
+	// Helper method for declarations
+	public Object addOrAccept(AstDecl astDecl, Mode mode) {
+		// If 1st pass, add the name to the symbol table
+		if (mode == Mode.HEAD) {
+			String name = ((AstNameDecl) astDecl).name;
+			try {
+				symbTable.ins(name, astDecl);
+			} catch (SymbTable.CannotInsNameException e) {
+				throw new Report.Error(astDecl, "Semantic error: '" + name + "' has already been declared");
 			}
-
-			for (AstTree t : trees) {
-				if (t != null) t.accept(this, Mode.BODY);
-			}
-		} else {
-			for (AstTree t : trees) {
-				if (t != null) t.accept(this, mode);
-			}
+		// If second pass, get the type's name
+		} else if (mode == Mode.BODY) {
+			if (astDecl instanceof AstMemDecl) ((AstMemDecl) astDecl).type.accept(this, mode);
+			if (astDecl instanceof AstTypeDecl) ((AstTypeDecl) astDecl).type.accept(this, mode);
 		}
 
 		return null;
 	}
 
 	@Override
-	public Object visit(AstFunDecl funDecl, NameResolver.Mode mode) {
+	public Object visit(AstTrees<? extends AstTree> trees, Mode mode) {
+		if (mode == null) {
+			// If called from Compiler, run both passes
+			for (AstTree t : trees) if (t != null) t.accept(this, Mode.HEAD);
+			for (AstTree t : trees) if (t != null) t.accept(this, Mode.BODY);
+		} else {
+			// If called recursively, run just the needed pass
+			for (AstTree t : trees) if (t != null) t.accept(this, mode);
+		}
+
+		return null;
+	}
+
+	@Override
+	public Object visit(AstFunDecl funDecl, Mode mode) {
+		// 1st pass adds the function name to the symbol table and throws an error if the name was already declared
 		if (mode == Mode.HEAD) {
 			try {
 				symbTable.ins(funDecl.name, funDecl);
 			} catch (SymbTable.CannotInsNameException e) {
 				throw new Report.Error(funDecl, "Semantic error: '" + funDecl.name + "' has already been declared");
 			}
+		// 2nd pass check the function's parameters and expression
 		} else if (mode == Mode.BODY) {
 
+			// Resolve parameter names and type name
 			if (funDecl.pars != null) funDecl.pars.accept(this, Mode.BODY);
-			funDecl.type.accept(this, Mode.BODY);
+			funDecl.type.accept(this, mode);
 
+			// Function body has a new scope
 			symbTable.newScope();
 
+			// Resolve parameter and expression names
 			if (funDecl.pars != null) funDecl.pars.accept(this, Mode.HEAD);
 			if (funDecl.expr != null) funDecl.expr.accept(this, Mode.BODY);
 
@@ -70,110 +91,82 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 	}
 
 	@Override
-	public Object visit(AstParDecl parDecl, NameResolver.Mode mode) {
-		if (mode == Mode.HEAD) {
-			try {
-				symbTable.ins(parDecl.name, parDecl);
-			} catch (SymbTable.CannotInsNameException e) {
-				throw new Report.Error(parDecl, "Semantic error: '" + parDecl.name + "' has already been declared");
-			}
-		} else if (mode == Mode.BODY) {
-			parDecl.type.accept(this, Mode.BODY);
+	public Object visit(AstParDecl parDecl, Mode mode) {
+		return addOrAccept(parDecl, mode);
+	}
+
+	@Override
+	public Object visit(AstTypeDecl typeDecl, Mode mode) {
+		return addOrAccept(typeDecl, mode);
+	}
+
+	@Override
+	public Object visit(AstVarDecl varDecl, Mode mode) {
+		return addOrAccept(varDecl, mode);
+	}
+
+	@Override
+	public Object visit(AstCallExpr callExpr, Mode mode) {
+		if (mode != Mode.BODY) return null;
+
+		// Wait until the 2nd pass to check if a function has been declared
+		try {
+			SemAn.declaredAt.put(callExpr, symbTable.fnd(callExpr.name));
+		} catch (SymbTable.CannotFndNameException e) {
+			throw new Report.Error(callExpr, "Semantic error: could not find call expression '" + callExpr.name + "'");
+		}
+
+		// Name resolve the expression's arguments
+		if (callExpr.args != null) callExpr.args.accept(this, mode);
+		return null;
+	}
+
+	@Override
+	public Object visit(AstNameExpr nameExpr, Mode mode) {
+		if (mode != Mode.BODY) return null;
+
+		try {
+			SemAn.declaredAt.put(nameExpr, symbTable.fnd(nameExpr.name));
+		} catch (SymbTable.CannotFndNameException e) {
+			throw new Report.Error(nameExpr, "Semantic error: could not find name expression '" + nameExpr.name + "'");
 		}
 
 		return null;
 	}
 
 	@Override
-	public Object visit(AstTypeDecl typeDecl, NameResolver.Mode mode) {
-		if (mode == Mode.HEAD) {
-			try {
-				symbTable.ins(typeDecl.name, typeDecl);
-			} catch (SymbTable.CannotInsNameException e) {
-				throw new Report.Error(typeDecl, "Semantic error: '" + typeDecl.name + "' has already been declared");
-			}
-		} else if (mode == Mode.BODY) {
-			typeDecl.type.accept(this, Mode.BODY);
-		}
+	public Object visit(AstRecExpr recExpr, Mode mode) {
+		if (mode != Mode.BODY) return null;
 
-		return null;
+		// Wait until the 2nd pass to check the record's components
+		return recExpr.rec.accept(this, Mode.BODY);
 	}
 
 	@Override
-	public Object visit(AstVarDecl varDecl, NameResolver.Mode mode) {
-		if (mode == Mode.HEAD) {
-			try {
-				symbTable.ins(varDecl.name, varDecl);
-			} catch (SymbTable.CannotInsNameException e) {
-				throw new Report.Error(varDecl, "Semantic error: '" + varDecl.name + "' has already been declared");
-			}
-		} else if (mode == Mode.BODY) {
-			varDecl.type.accept(this, Mode.BODY);
-		}
+	public Object visit(AstWhereExpr whereExpr, Mode mode) {
+		if (mode != Mode.BODY) return null;
 
-		return null;
-	}
+		// Where expression's body has a new scope
+		symbTable.newScope();
 
-	@Override
-	public Object visit(AstCallExpr callExpr, NameResolver.Mode mode) {
-		if (mode == Mode.BODY) {
-			try {
-				SemAn.declaredAt.put(callExpr, symbTable.fnd(callExpr.name));
-			} catch (SymbTable.CannotFndNameException e) {
-				throw new Report.Error(callExpr, "Semantic error: could not find call expression '" + callExpr.name + "'");
-			}
+		// Name resolve all the declarations and expression
+		whereExpr.decls.accept(this, Mode.HEAD);
+		whereExpr.decls.accept(this, Mode.BODY);
+		whereExpr.expr.accept(this, Mode.BODY);
 
-			if (callExpr.args != null) callExpr.args.accept(this, Mode.BODY);
-		}
-
-		return null;
-	}
-
-	@Override
-	public Object visit(AstNameExpr nameExpr, NameResolver.Mode mode) {
-		if (mode == Mode.BODY) {
-			try {
-				SemAn.declaredAt.put(nameExpr, symbTable.fnd(nameExpr.name));
-			} catch (SymbTable.CannotFndNameException e) {
-				throw new Report.Error(nameExpr, "Semantic error: could not find name expression '" + nameExpr.name + "'");
-			}
-		}
-
-		return null;
-	}
-
-	@Override
-	public Object visit(AstRecExpr recExpr, NameResolver.Mode mode) {
-		if (mode == Mode.BODY) {
-			recExpr.rec.accept(this, Mode.BODY);
-		}
-
-		return null;
-	}
-
-	@Override
-	public Object visit(AstWhereExpr whereExpr, NameResolver.Mode mode) {
-		if (mode == Mode.BODY) {
-			symbTable.newScope();
-
-			whereExpr.decls.accept(this, Mode.HEAD);
-			whereExpr.decls.accept(this, Mode.BODY);
-			whereExpr.expr.accept(this, Mode.BODY);
-
-			symbTable.oldScope();
-		}
-
+		symbTable.oldScope();
 		return null;
 	}
 
 	@Override
 	public Object visit(AstNameType nameType, NameResolver.Mode mode) {
-		if (mode == Mode.BODY) {
-			try {
-				SemAn.declaredAt.put(nameType, symbTable.fnd(nameType.name));
-			} catch (SymbTable.CannotFndNameException e) {
-				throw new Report.Error(nameType, "Semantic error: could not find name type '" + nameType.name + "'");
-			}
+		if (mode != Mode.BODY) return null;
+
+		// Wait until the 2nd pass to check if the name has been declared
+		try {
+			SemAn.declaredAt.put(nameType, symbTable.fnd(nameType.name));
+		} catch (SymbTable.CannotFndNameException e) {
+			throw new Report.Error(nameType, "Semantic error: could not find name type '" + nameType.name + "'");
 		}
 
 		return null;
