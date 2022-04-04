@@ -4,7 +4,7 @@ all: help
 
 clean:
 	$(MAKE) -s -C prev22 clean
-	rm -rf prev22/gen prev22/src/prev/phase/**/.antlr
+	rm -rf out prev22/gen prev22/src/prev/phase/**/.antlr
 
 compile:
 	$(MAKE) -s -C prev22 all
@@ -31,7 +31,7 @@ test:
 zip:
     ifdef name
 		$(MAKE) -s -C prev22 clean
-		rm -rf prev22/gen prev22/src/prev/phase/**/.antlr
+		rm -rf out prev22/gen prev22/src/prev/phase/**/.antlr
 		zip -r "$(name).zip" prev22 -x prev22/prev22.iml -x prev22/prg/*.p22
     else
 		@echo "Zip name must be specified!"
