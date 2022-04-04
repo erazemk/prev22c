@@ -637,7 +637,7 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 
 		// Check function's return type
 		if (!(funType instanceof SemVoid || funType instanceof SemBool || funType instanceof SemChar
-			|| funType instanceof SemInt || (funType instanceof SemPtr && (((SemPtr) funType).baseType instanceof
+			|| funType instanceof SemInt || (funType instanceof SemPtr && !(((SemPtr) funType).baseType instanceof
 			SemVoid || ((SemPtr) funType).baseType instanceof SemBool || ((SemPtr) funType).baseType instanceof SemChar
 			|| ((SemPtr) funType).baseType instanceof SemInt))))
 			throw new Report.Error(funDecl, "Type error: invalid function type " + funTyp);
