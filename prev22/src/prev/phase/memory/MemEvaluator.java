@@ -63,12 +63,14 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 		newContext.offset = 0;
 
 		// Evaluate return type's size (shouldn't be null, but AstFullVisitor does it this way)
-		if (funDecl.type != null)
+		if (funDecl.type != null) {
 			funDecl.type.accept(this, newContext);
+		}
 
 		// Evaluate expression's size
-		if (funDecl.expr != null)
+		if (funDecl.expr != null) {
 			funDecl.expr.accept(this, newContext);
+		}
 
 		// Create a named label if top level, otherwise create an anonymous label
 		MemLabel label;
@@ -136,7 +138,9 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 			MemRelAccess relAccess = new MemRelAccess(type.size(), context.offset, context.depth);
 			Memory.accesses.put(varDecl, relAccess);
 		}
+
 		varDecl.type.accept(this, new Context());
+
 		return null;
 	}
 
@@ -184,8 +188,9 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 	@Override
 	public Object visit(AstRecType recType, Context context) {
 		// Evaluate components' sizes
-		if (recType.comps != null)
+		if (recType.comps != null) {
 			recType.comps.accept(this, new Context());
+		}
 
 		return null;
 	}
