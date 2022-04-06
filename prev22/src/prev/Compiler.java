@@ -26,7 +26,7 @@ public class Compiler {
 
 	/**
 	 * Returns the value of a command line argument.
-	 * 
+	 *
 	 * @param cmdLineArgName The name of the command line argument.
 	 * @return The value of the specified command line argument or {@code null} if
 	 *         the specified command line argument has not been used.
@@ -39,7 +39,7 @@ public class Compiler {
 
 	/**
 	 * The compiler's startup method.
-	 * 
+	 *
 	 * @param args Command line arguments (see {@link prev.Compiler}).
 	 */
 	public static void main(String[] args) {

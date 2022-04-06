@@ -81,6 +81,7 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 
 	@Override
 	public SemType visit(AstNameType nameType, Mode mode) {
+		//Report.info(nameType, "Name: " + nameType.name);
 		if (mode != Mode.BODY) return null;
 
 		// Get declaration from name
@@ -97,8 +98,11 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 	@Override
 	public SemType visit(AstParDecl parDecl, Mode mode) {
 		if (mode == Mode.BODY) {
+			//Report.info(parDecl, "TypeResolver: resolving param " + parDecl.name);
+
 			// Resolve parameter's type
 			parDecl.type.accept(this, mode);
+
 			SemType parType = SemAn.isType.get(parDecl.type);
 			SemAn.isType.put(parDecl.type, parType);
 			return parType;
@@ -106,6 +110,9 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 
 		if (mode == Mode.FEET) {
 			SemType actualParType = SemAn.isType.get(parDecl.type).actualType();
+
+			//Report.info(parDecl, "TypeResolver: type = " + SemAn.isType.get(parDecl.type));
+
 			if (!(actualParType instanceof SemBool || actualParType instanceof SemChar ||
 				actualParType instanceof SemInt || actualParType instanceof SemPtr))
 				throw new Report.Error(parDecl, "Type error: parameter must be of type 'bool', " +
@@ -627,10 +634,11 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 	// Function declarations (3 & 4)
 	@Override
 	public SemType visit(AstFunDecl funDecl, Mode mode) {
-		if (mode == Mode.HEAD && funDecl.pars != null)
-			funDecl.pars.accept(this, mode);
-
 		if (mode != Mode.BODY) return null;
+
+		//Report.info(funDecl, "Accepted params (" + funDecl.name + "): " + funDecl.pars);
+
+		funDecl.pars.accept(this, mode);
 
 		SemType funTyp = funDecl.type.accept(this, mode);
 		SemType funType = funTyp.actualType();

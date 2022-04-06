@@ -55,8 +55,10 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 		newContext.offset = (new SemPtr(new SemVoid())).size();
 
 		// Evaluate parameters' size
-		if (funDecl.pars != null)
+		if (funDecl.pars != null) {
+			//Report.info(funDecl, "MemEvaluator: evaluating params (" + funDecl.name + "): " + funDecl.pars);
 			funDecl.pars.accept(this, newContext);
+		}
 
 		newContext.offset = 0;
 
@@ -85,7 +87,7 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 
 	@Override
 	public Object visit(AstParDecl parDecl, Context context) {
-		Report.info(parDecl, "Param: " + parDecl.name);
+		//Report.info(parDecl, "Param: " + parDecl.name);
 
 		// Evaluate type's size
 		parDecl.type.accept(this, context);
@@ -93,7 +95,7 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 		// Get the parameter's type to calculate size
 		SemType type = SemAn.isType.get(parDecl.type);
 
-		Report.info(parDecl, "Param type: " + parDecl.type);
+		//Report.info(parDecl, "Param type (" + parDecl.name + "): " + type);
 
 		// Create a new relative variable
 		MemRelAccess relAccess = new MemRelAccess(type.size(), context.offset, context.depth);
@@ -111,7 +113,7 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 
 	@Override
 	public Object visit(AstVarDecl varDecl, Context context) {
-		Report.info(varDecl, "Variable: " + varDecl.name);
+		//Report.info(varDecl, "Variable: " + varDecl.name);
 
 		// Evaluate type's size
 		varDecl.type.accept(this, context);
@@ -119,7 +121,7 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 		// Get variable's type to calculate size
 		SemType type = SemAn.isType.get(varDecl.type);
 
-		Report.info(varDecl, "Variable size " + type.size());
+		//Report.info(varDecl, "Variable size " + type.size());
 
 		// If top level variable, the context will be null
 		if (context == null) {
