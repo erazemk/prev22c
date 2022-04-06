@@ -33,8 +33,9 @@ public class AddrResolver extends AstFullVisitor<Object, Object> {
 	public Object visit(AstNameExpr nameExpr, Object mode) {
 		AstDecl decl = SemAn.declaredAt.get(nameExpr);
 
-		if (decl instanceof AstVarDecl || decl instanceof AstParDecl)
+		if (decl instanceof AstVarDecl || decl instanceof AstParDecl) {
 			SemAn.isAddr.put(nameExpr, true);
+		}
 
 		return null;
 	}
@@ -43,8 +44,9 @@ public class AddrResolver extends AstFullVisitor<Object, Object> {
 	public Object visit(AstSfxExpr sfxExpr, Object mode) {
 		SemType type = (SemType) sfxExpr.expr.accept(this, mode);
 
-		if (type instanceof SemPtr)
+		if (type instanceof SemPtr) {
 			SemAn.isAddr.put(sfxExpr, true);
+		}
 
 		return null;
 	}
@@ -55,8 +57,9 @@ public class AddrResolver extends AstFullVisitor<Object, Object> {
 		arrExpr.idx.accept(this, mode);
 		Boolean isAddr = SemAn.isAddr.get(arrExpr.arr);
 
-		if (isAddr != null && isAddr)
+		if (isAddr != null && isAddr) {
 			SemAn.isAddr.put(arrExpr, true);
+		}
 
 		return null;
 	}
@@ -67,8 +70,9 @@ public class AddrResolver extends AstFullVisitor<Object, Object> {
 		recExpr.comp.accept(this, mode);
 		Boolean isAddr = SemAn.isAddr.get(recExpr.rec);
 
-		if (isAddr != null && isAddr)
+		if (isAddr != null && isAddr) {
 			SemAn.isAddr.put(recExpr, true);
+		}
 
 		return null;
 	}
@@ -77,10 +81,12 @@ public class AddrResolver extends AstFullVisitor<Object, Object> {
 	public Object visit(AstAssignStmt assignStmt, Object mode) {
 		assignStmt.src.accept(this, mode);
 		assignStmt.dst.accept(this, mode);
+
 		Boolean isAddr = SemAn.isAddr.get(assignStmt.dst);
 
-		if (isAddr == null || !isAddr)
+		if (isAddr == null || !isAddr) {
 			throw new Report.Error(assignStmt, "Type error: cannot assign to non-identifier");
+		}
 
 		return null;
 	}
