@@ -30,32 +30,45 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 
 	// Helper method for declarations
 	public Object addOrAccept(AstDecl astDecl, Mode mode) {
-		// If 1st pass, add the name to the symbol table
 		if (mode == Mode.HEAD) {
+			// If 1st pass, add the name to the symbol table
 			String name = ((AstNameDecl) astDecl).name;
+
 			try {
 				symbTable.ins(name, astDecl);
 			} catch (SymbTable.CannotInsNameException e) {
 				throw new Report.Error(astDecl, "Semantic error: '" + name + "' has already been declared");
 			}
-		// If second pass, get the type's name
 		} else if (mode == Mode.BODY) {
-			if (astDecl instanceof AstMemDecl) ((AstMemDecl) astDecl).type.accept(this, mode);
-			if (astDecl instanceof AstTypeDecl) ((AstTypeDecl) astDecl).type.accept(this, mode);
+			// If second pass, get the type's name
+			if (astDecl instanceof AstMemDecl) {
+				((AstMemDecl) astDecl).type.accept(this, mode);
+			} else if (astDecl instanceof AstTypeDecl) {
+				((AstTypeDecl) astDecl).type.accept(this, mode);
+			}
 		}
 
 		return null;
+	}
+
+	// Helper method to visit whole tree with the provided mode
+	public void visitTree(AstTrees<? extends AstTree> trees, Mode mode) {
+		for (AstTree t : trees) {
+			if (t != null) {
+				t.accept(this, mode);
+			}
+		}
 	}
 
 	@Override
 	public Object visit(AstTrees<? extends AstTree> trees, Mode mode) {
 		if (mode == null) {
 			// If called from Compiler, run both passes
-			for (AstTree t : trees) if (t != null) t.accept(this, Mode.HEAD);
-			for (AstTree t : trees) if (t != null) t.accept(this, Mode.BODY);
+			visitTree(trees, Mode.HEAD);
+			visitTree(trees, Mode.BODY);
 		} else {
 			// If called recursively, run just the needed pass
-			for (AstTree t : trees) if (t != null) t.accept(this, mode);
+			visitTree(trees, mode);
 		}
 
 		return null;
@@ -72,17 +85,23 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 			}
 		// 2nd pass check the function's parameters and expression
 		} else if (mode == Mode.BODY) {
+			if (funDecl.pars != null) {
+				funDecl.pars.accept(this, Mode.BODY);
+			}
 
-			// Resolve parameter names and type name
-			if (funDecl.pars != null) funDecl.pars.accept(this, Mode.BODY);
 			funDecl.type.accept(this, mode);
 
 			// Function body has a new scope
 			symbTable.newScope();
 
-			// Resolve parameter and expression names
-			if (funDecl.pars != null) funDecl.pars.accept(this, Mode.HEAD);
-			if (funDecl.expr != null) funDecl.expr.accept(this, Mode.BODY);
+			if (funDecl.pars != null) {
+				funDecl.pars.accept(this, Mode.HEAD);
+			}
+
+
+			if (funDecl.expr != null) {
+				funDecl.expr.accept(this, Mode.BODY);
+			}
 
 			symbTable.oldScope();
 		}
@@ -117,7 +136,10 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 		}
 
 		// Name resolve the expression's arguments
-		if (callExpr.args != null) callExpr.args.accept(this, mode);
+		if (callExpr.args != null) {
+			callExpr.args.accept(this, mode);
+		}
+
 		return null;
 	}
 
