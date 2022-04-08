@@ -10,6 +10,7 @@ import prev.phase.synan.*;
 import prev.phase.abstr.*;
 import prev.phase.seman.*;
 import prev.phase.memory.*;
+import prev.phase.imcgen.*;
 
 /**
  * The compiler.
@@ -19,17 +20,14 @@ public class Compiler {
 	// COMMAND LINE ARGUMENTS
 
 	/** All valid phases of the compiler. */
-	private static final String phases = "none|lexan|synan|abstr|seman|memory";
-
-	/** A flag for enabling the printing of Report.info messages */
-	public static boolean debug = false;
+	private static final String phases = "none|lexan|synan|abstr|seman|memory|imcgen";
 
 	/** Values of command line arguments. */
 	private static HashMap<String, String> cmdLine = new HashMap<String, String>();
 
 	/**
 	 * Returns the value of a command line argument.
-	 *
+	 * 
 	 * @param cmdLineArgName The name of the command line argument.
 	 * @return The value of the specified command line argument or {@code null} if
 	 *         the specified command line argument has not been used.
@@ -42,7 +40,7 @@ public class Compiler {
 
 	/**
 	 * The compiler's startup method.
-	 *
+	 * 
 	 * @param args Command line arguments (see {@link prev.Compiler}).
 	 */
 	public static void main(String[] args) {
@@ -53,10 +51,6 @@ public class Compiler {
 			for (int argc = 0; argc < args.length; argc++) {
 				if (args[argc].startsWith("--")) {
 					// Command-line switch.
-					if (args[argc].matches("--debug")) {
-						debug = true;
-						continue;
-					}
 					if (args[argc].matches("--src-file-name=.*")) {
 						if (cmdLine.get("--src-file-name") == null) {
 							cmdLine.put("--src-file-name", args[argc]);
@@ -162,6 +156,18 @@ public class Compiler {
 					Abstr.tree.accept(logger, "Decls");
 				}
 				if (Compiler.cmdLineArgValue("--target-phase").equals("memory"))
+					break;
+
+				// Intermediate code generation.
+				try (ImcGen imcgen = new ImcGen()) {
+					Abstr.tree.accept(new CodeGenerator(), null);
+					AbsLogger logger = new AbsLogger(imcgen.logger);
+					logger.addSubvisitor(new SemLogger(imcgen.logger));
+					logger.addSubvisitor(new MemLogger(imcgen.logger));
+					logger.addSubvisitor(new ImcLogger(imcgen.logger));
+					Abstr.tree.accept(logger, "Decls");
+				}
+				if (Compiler.cmdLineArgValue("--target-phase").equals("imcgen"))
 					break;
 
 			}
