@@ -79,9 +79,9 @@ IDENT: [a-zA-Z_][a-zA-Z0-9_]*;
 // Error handling
 ERR_PADDED_INT: [0][0-9]+ {
 	if (true) {
-		new Report.Error(new Location( _tokenStartLine,
+		new Report.Error(new Location(_tokenStartLine,
 			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
-			"Lexical error: 0-padded integer"
+			"[PrevLexer]: 0-padded integer"
 		);
 	}
 };
@@ -89,7 +89,7 @@ ERR_LONG_CHAR: '\''([ -&]|[(-~])([ -&]|[(-~])+'\'' {
 	if (true) {
 		new Report.Error(new Location(_tokenStartLine,
 			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
-			"Lexical error: multiple characters inside single quote"
+			"[PrevLexer]: multiple characters inside single quote"
 		);
 	}
 };
@@ -97,7 +97,7 @@ ERR_UNESCAPED_QUOTE: '\'''\'''\'' {
 	if (true) {
 		new Report.Error(new Location(_tokenStartLine,
 			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
-			"Lexical error: unescaped single quote"
+			"[PrevLexer]: unescaped single quote"
 		);
 	}
 };
@@ -105,7 +105,7 @@ ERR_UNTERMINATED_CHAR: '\''([ -&]|[(-~]|'\\\'')*('\n'|EOF) {
 	if (true) {
 		new Report.Error(new Location(_tokenStartLine,
 			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
-			"Lexical error: unterminated char"
+			"[PrevLexer]: unterminated char"
 		);
 	}
 };
@@ -113,7 +113,7 @@ ERR_UNTERMINATED_STR: '"'([ -!]|[#-~]|'\\"')*('\n'|EOF) {
 	if (true) {
 		new Report.Error(new Location(_tokenStartLine,
 			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
-			"Lexical error: unterminated string"
+			"[PrevLexer]: unterminated string"
 		);
 	}
 };
@@ -121,7 +121,7 @@ OTHER_ERR: . {
 	if (true) {
 		new Report.Error(new Location(_tokenStartLine,
 			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
-			"Unrecognised symbol " + getText()
+			"[PrevLexer]: unrecognised symbol " + getText()
 		);
 	}
 };
