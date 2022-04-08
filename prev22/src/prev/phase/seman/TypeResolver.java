@@ -23,30 +23,22 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 	public enum Mode {
 		HEAD,
 		BODY,
-		FEET
+		FEET // Used for properly resolving arrays and records
 	}
+
+	// Identifier for info reports
+	private final String TAG = "[TypeResolver]: ";
 
 	// Stores symbol tables for records
-	private final HashMap<SemRec, AstRecType> recordTypes = new HashMap<>();
+	private final HashMap<SemRec, SymbTable> recordMap = new HashMap<>();
 
-	/*
-	 * EXTRA
-	 */
-
-	// Helper method to visit whole tree with the provided mode
-	public void visitTree(AstTrees<? extends AstTree> trees, Mode mode) {
-		for (AstTree t : trees) {
-			if (t != null) {
-				t.accept(this, mode);
-			}
-		}
-	}
+	// GENERAL PURPOSE
 
 	// Detect recursive types by adding them to a HashSet and then comparing new ones
 	public void detectRecursiveType(AstType type, HashSet<Integer> set) {
 		// Check if type is already in the set
 		if (set.contains(type.id())) {
-			throw new Report.Error(type, "Type error: recursive type");
+			throw new Report.Error(type, TAG + "recursive type");
 		}
 
 		// If not, add it to the set
@@ -72,372 +64,148 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 
 	@Override
 	public SemType visit(AstTrees<? extends AstTree> trees, Mode mode) {
-		if (mode == null) {
-			// If called from Compiler, run all passes
-			visitTree(trees, Mode.HEAD);
-			visitTree(trees, Mode.BODY);
-			visitTree(trees, Mode.FEET);
-		} else {
-			// If called recursively, run just the needed pass
-			visitTree(trees, mode);
+		// First pass checks for recursion and declares a new type
+		for (AstTree t : trees) {
+			if (t instanceof AstTypeDecl) {
+				t.accept(this, Mode.HEAD);
+			}
 		}
 
-		return null;
-	}
-
-	@Override
-	public SemType visit(AstNameType nameType, Mode mode) {
-		//Report.info(nameType, "Name: " + nameType.name);
-		if (mode != Mode.BODY) return null;
-
-		// Get declaration from name
-		AstDecl nameDecl = SemAn.declaredAt.get(nameType);
-		if (!(nameDecl instanceof AstTypeDecl)) {
-			throw new Report.Error(nameType, "Type error: undeclared type");
+		// Second pass resolves all non-array and non-record types
+		for (AstTree t : trees) {
+			if (t instanceof AstTypeDecl) {
+				t.accept(this, Mode.BODY);
+			}
 		}
 
-		// Get semantic name from type declaration
-		SemName semName = SemAn.declaresType.get((AstTypeDecl) nameDecl);
-		SemAn.isType.put(nameType, semName);
-		return semName;
-	}
-
-	@Override
-	public SemType visit(AstParDecl parDecl, Mode mode) {
-		if (mode == Mode.BODY) {
-			//Report.info(parDecl, "TypeResolver: resolving param " + parDecl.name);
-
-			// Resolve parameter's type
-			parDecl.type.accept(this, mode);
-
-			SemType parType = SemAn.isType.get(parDecl.type);
-			SemAn.isType.put(parDecl.type, parType);
-			return parType;
+		// Third pass resolves arrays and records
+		for (AstTree t : trees) {
+			if (t instanceof AstTypeDecl) {
+				t.accept(this, Mode.FEET);
+			}
 		}
 
-		if (mode == Mode.FEET) {
-			SemType actualParType = SemAn.isType.get(parDecl.type).actualType();
+		// Mode doesn't matter in this case
+		for (AstTree t : trees) {
+			if (t instanceof AstVarDecl) {
+				t.accept(this, Mode.HEAD);
+			}
+		}
 
-			//Report.info(parDecl, "TypeResolver: type = " + SemAn.isType.get(parDecl.type));
+		// First pass resolves parameters and function type
+		for (AstTree t : trees) {
+			if (t instanceof AstFunDecl) {
+				t.accept(this, Mode.HEAD);
+			}
+		}
 
-			if (!(actualParType instanceof SemBool || actualParType instanceof SemChar ||
-				actualParType instanceof SemInt || actualParType instanceof SemPtr)) {
-				throw new Report.Error(parDecl, "Type error: parameter must be of type 'bool', " +
-					"'char' or 'int'");
+		// Second pass resolves the expression (mode doesn't matter)
+		for (AstTree t : trees) {
+			if (t instanceof AstFunDecl) {
+				t.accept(this, Mode.BODY);
 			}
 		}
 
 		return null;
 	}
 
-	@Override
-	public SemType visit(AstNameExpr nameExpr, Mode mode) {
-		AstDecl decl = SemAn.declaredAt.get(nameExpr);
-		SemType type;
-
-		if (decl instanceof AstFunDecl) {
-			if (((AstFunDecl) decl).pars != null) {
-				throw new Report.Error(nameExpr, "Type error: missing arguments for function call");
-			}
-
-			type = SemAn.isType.get(((AstFunDecl) decl).type);
-		} else if (decl instanceof AstVarDecl) {
-			type = SemAn.isType.get(((AstVarDecl) decl).type);
-		} else if (decl instanceof AstParDecl) {
-			type = SemAn.isType.get(((AstParDecl) decl).type);
-		} else {
-			throw new Report.Error(nameExpr, "Type error: you can only declare variables, parameters " +
-				"or records components");
-		}
-
-		SemAn.ofType.put(nameExpr, type);
-		return type;
-	}
+	// DECLARATIONS
 
 	@Override
 	public SemType visit(AstCompDecl compDecl, Mode mode) {
-		if (mode != Mode.BODY) return null;
-
-		// Resolve record component's type
 		SemType type = compDecl.type.accept(this, mode);
 		SemAn.isType.put(compDecl.type, type);
 		return type;
 	}
-
 	@Override
-	public SemType visit(AstExprStmt exprStmt, Mode mode) {
-		SemType type = exprStmt.expr.accept(this, mode);
-		SemAn.ofType.put(exprStmt, type);
-		return type;
-	}
-
-	/*
-	 * TYPE EXPRESSIONS
-	 */
-
-	// Type 1
-	@Override
-	public SemType visit(AstAtomType atomType, Mode mode) {
-		if (mode != Mode.BODY) return null;
-
-		SemType type = switch (atomType.type) {
-			case VOID -> new SemVoid();
-			case CHAR -> new SemChar();
-			case INT -> new SemInt();
-			case BOOL -> new SemBool();
-		};
-
-		SemAn.isType.put(atomType, type);
-		return type;
-	}
-
-	// Type 2
-	@Override
-	public SemType visit(AstArrType arrType, Mode mode) {
-		if (mode != Mode.BODY) return null;
-
-		arrType.elemType.accept(this, mode);
-		arrType.numElems.accept(this, mode);
-
-		SemType elemType = SemAn.isType.get(arrType.elemType).actualType();
-
-		if (elemType instanceof SemVoid) {
-			throw new Report.Error(arrType, "Type error: array element cannot be of type 'void'");
-		}
-
-		if (!(arrType.numElems instanceof AstAtomExpr)) {
-			throw new Report.Error(arrType, "Type error: array index must be of type 'int'");
-		}
-
-		if (((AstAtomExpr) arrType.numElems).type != AstAtomExpr.Type.INT) {
-			throw new Report.Error(arrType, "Type error: array index must be of type 'int'");
-		}
-
-		long numElems;
-		try {
-			numElems = Long.parseLong(((AstAtomExpr) arrType.numElems).value);
-		} catch (NumberFormatException nfe) {
-			throw new Report.Error(arrType, "Type error: invalid array size");
-		}
-
-		if (numElems < 0) {
-			throw new Report.Error(arrType, "Type error: array index cannot be negative");
-		}
-
-		SemType type = SemAn.isType.get(arrType.elemType);
-		SemAn.isType.put(arrType, new SemArr(type, numElems));
-		return type;
-	}
-
-	// Type 3
-	@Override
-	public SemType visit(AstRecType recType, Mode mode) {
-		if (mode != Mode.BODY) return null;
-
-		Vector<SemType> compTypes = new Vector<>();
-		recType.comps.accept(this, mode);
-
-		for (AstCompDecl comp : recType.comps) {
-			compTypes.add(SemAn.isType.get(comp.type));
-		}
-
-		SemRec rec = new SemRec(compTypes);
-		SemAn.isType.put(recType, rec);
-		recordTypes.put(rec, recType);
-		return rec;
-	}
-
-	// Type 4
-	@Override
-	public SemType visit(AstPtrType ptrType, Mode mode) {
-		if (mode != Mode.BODY) return null;
-
-		ptrType.baseType.accept(this, mode);
-
-		SemType baseType = SemAn.isType.get(ptrType.baseType);
-
-		if (baseType == null) {
-			throw new Report.Error(ptrType, "Type error: undeclared pointer type");
-		}
-
-		SemType type = new SemPtr(baseType);
-		SemAn.isType.put(ptrType, type);
-		return type;
-	}
-
-	// Type 5 is not needed
-
-	/*
-	 * VALUE EXPRESSIONS
-	 */
-
-	// Atom expressions
-	@Override
-	public SemType visit(AstAtomExpr atomExpr, Mode mode) {
-		SemType type = switch(atomExpr.type) {
-			// Value 1
-			case VOID -> new SemVoid();
-			case POINTER -> new SemPtr(new SemVoid());
-			case STRING -> new SemPtr(new SemChar());
-
-			// Value 2
-			case BOOL -> new SemBool();
-			case CHAR -> new SemChar();
-			case INT -> new SemInt();
-		};
-
-		SemAn.ofType.put(atomExpr, type);
-		return type;
-	}
-
-	// Prefix expressions
-	@Override
-	public SemType visit(AstPfxExpr pfxExpr, Mode mode) {
-		pfxExpr.expr.accept(this, mode);
-		SemType exprType = SemAn.ofType.get(pfxExpr.expr).actualType();
-
-		SemType type = null;
-		switch (pfxExpr.oper) {
-			// Value 3
-			case NOT -> {
-				if (!(exprType instanceof SemBool)) {
-					throw new Report.Error(pfxExpr, "Type error: cannot use negation with non-boolean " +
-						"expression");
-				}
-
-				type = new SemBool();
-			}
-			case ADD, SUB -> {
-				if (!(exprType instanceof SemInt)) {
-					throw new Report.Error(pfxExpr, "Type error: cannot add or subtract from non-integer " +
-						"expression");
-				}
-
-				type = new SemInt();
+	public SemType visit(AstFunDecl funDecl, Mode mode) {
+		// First pass
+		if (mode == Mode.HEAD) {
+			for (AstParDecl par : funDecl.pars) {
+				par.accept(this, mode);
 			}
 
-			// Value 8 (left)
-			case PTR -> type = new SemPtr(exprType);
+			SemType funType = funDecl.type.accept(this, mode);
 
-			// Value 9
-			case NEW -> {
-				if (!(exprType instanceof SemInt)) {
-					throw new Report.Error(pfxExpr, "Type error: cannot use 'new' with non-integer expression");
-				}
-
-				type = new SemPtr(new SemVoid());
+			SemType actualFunType = funType.actualType();
+			if (actualFunType instanceof SemArr || actualFunType instanceof SemRec) {
+				throw new Report.Error(funDecl, TAG + "invalid function type " + funType.getClass().getSimpleName());
 			}
-			case DEL -> {
-				if (!(exprType instanceof SemPtr)) {
-					throw new Report.Error(pfxExpr, "Type error: cannot use 'del' with non-pointer expression");
-				}
 
-				type = new SemVoid();
+			SemAn.isType.put(funDecl.type, funType);
+			return null;
+		}
+
+		// Second pass
+		if (funDecl.expr != null) {
+			SemType exprType = funDecl.expr.accept(this, mode);
+			SemType funType = SemAn.isType.get(funDecl.type);
+
+			if (exprType != null && !funType.getClass().equals(exprType.getClass())) {
+				throw new Report.Error(funDecl, TAG + "mismatch between function expression and " +
+					"return types");
 			}
 		}
 
-		SemAn.ofType.put(pfxExpr, type);
-		return type;
+		return null;
 	}
 
-	// Binary expressions
 	@Override
-	public SemType visit(AstBinExpr binExpr, Mode mode) {
-		if (mode != Mode.FEET) return null;
+	public SemType visit(AstParDecl parDecl, Mode mode) {
+		SemType parType = parDecl.type.accept(this, mode);
 
-		binExpr.fstExpr.accept(this, mode);
-		binExpr.sndExpr.accept(this, mode);
-
-		SemType fstExprType = SemAn.ofType.get(binExpr.fstExpr).actualType();
-		SemType sndExprType = SemAn.ofType.get(binExpr.sndExpr).actualType();
-
-		SemType type = null;
-		switch (binExpr.oper) {
-			// Value 4
-			case AND, OR:
-				if (!(fstExprType instanceof SemBool && sndExprType instanceof SemBool)) {
-					throw new Report.Error(binExpr, "Type error: cannot use operators '&' and '|' in " +
-						"non-boolean expressions");
-				}
-
-				type = new SemBool();
-				break;
-
-			// Value 5
-			case ADD, SUB, MUL, DIV, MOD:
-				if (!(fstExprType instanceof SemInt && sndExprType instanceof SemInt)) {
-					throw new Report.Error(binExpr, "Type error: cannot use operators '+', '-', '*', '/', " +
-						"'%' in non-integer expressions");
-				}
-
-				type = new SemInt();
-				break;
-
-			// Value 6
-			case EQU, NEQ:
-				if (fstExprType instanceof SemBool && sndExprType instanceof SemBool) { // Both booleans
-					type = new SemBool();
-				} else if (fstExprType instanceof SemChar && sndExprType instanceof SemChar) { // Both chars
-					type = new SemChar();
-				} else if (fstExprType instanceof SemInt && sndExprType instanceof SemInt) { // Both ints
-					type = new SemInt();
-				} else if (fstExprType instanceof SemPtr && sndExprType instanceof SemPtr && // Both pointers
-						((SemPtr) fstExprType).baseType == ((SemPtr) sndExprType).baseType && // Same type
-						(((SemPtr) fstExprType).baseType instanceof SemBool || ((SemPtr) fstExprType).baseType instanceof
-							SemChar || ((SemPtr) fstExprType).baseType instanceof SemInt)) { // Pointer of type bool/char/int
-					type = new SemPtr(((SemPtr) fstExprType).baseType);
-				} else {
-					throw new Report.Error(binExpr, "Type error: cannot use operators '==' and '!=' with " +
-						"a combination of expressions of type " + fstExprType.toString() + " and " +
-						sndExprType.toString());
-				}
-				break;
-
-			// Value 7
-			case LEQ, GEQ, LTH, GTH:
-				if (fstExprType instanceof SemChar && sndExprType instanceof SemChar) {
-					type = new SemChar();
-				} else if (fstExprType instanceof SemInt && sndExprType instanceof SemInt) {
-					type = new SemInt();
-				} else if (fstExprType instanceof SemPtr && sndExprType instanceof SemPtr && // Both pointers
-						((SemPtr) fstExprType).baseType == ((SemPtr) sndExprType).baseType && // Same type
-						(((SemPtr) fstExprType).baseType instanceof SemChar || ((SemPtr) fstExprType).baseType
-							instanceof SemInt)) { // Pointer of type char/int
-					type = new SemPtr(((SemPtr) fstExprType).baseType);
-				} else {
-					throw new Report.Error(binExpr, "Type error: cannot use operators '<=', '>=', '<' and " +
-						"'>' with a combination of expressions of type " + fstExprType.toString() + " and " +
-						sndExprType.toString());
-				}
-				break;
+		SemType actualParType = parType.actualType();
+		if (!(actualParType instanceof SemBool || actualParType instanceof SemChar ||
+			actualParType instanceof SemInt || actualParType instanceof SemPtr)) {
+			throw new Report.Error(parDecl, TAG + "parameter must be of type 'bool', " +
+				"'char' or 'int'");
 		}
 
-		SemAn.ofType.put(binExpr, type);
-		return type;
+		return parType;
 	}
 
-	// Value 8 (right)
 	@Override
-	public SemType visit(AstSfxExpr sfxExpr, Mode mode) {
-		if (mode != Mode.FEET) return null;
+	public SemType visit(AstTypeDecl typeDecl, Mode mode) {
+		if (mode == Mode.HEAD) {
+			// First pass check for recursion and declares the name
+			detectRecursiveType(typeDecl.type, new HashSet<>());
+			SemAn.declaresType.put(typeDecl, new SemName(typeDecl.name));
+		} else if (mode == Mode.BODY && !(typeDecl.type instanceof AstRecType || typeDecl.type instanceof AstArrType)) {
+			// Second pass resolves all non-record and non-array types
+			SemType type = typeDecl.type.accept(this, mode);
+			SemAn.declaresType.get(typeDecl).define(type);
+		} else if (mode == Mode.FEET) {
+			// Third pass resolves all types, but most importantly, arrays and records
+			SemType type = typeDecl.type.accept(this, mode);
 
-		sfxExpr.expr.accept(this, mode);
-		SemType exprType = SemAn.ofType.get(sfxExpr.expr);
+			Report.info(typeDecl, TAG + "type in feet: " + type);
 
-		if (!(exprType.actualType() instanceof SemPtr)) {
-			throw new Report.Error(sfxExpr, "Type error: " + exprType + " is not a pointer");
+			SemType declaredType = SemAn.declaresType.get(typeDecl).type();
+			if (declaredType == null) {
+				SemAn.declaresType.get(typeDecl).define(type);
+			}
 		}
 
-		SemType type = ((SemPtr) exprType).baseType;
-		SemAn.ofType.put(sfxExpr, type);
-		return type;
+		return null;
 	}
 
-	// Value 10
+	@Override
+	public SemType visit(AstVarDecl varDecl, Mode mode) {
+		varDecl.type.accept(this, mode);
+
+		SemType semType = SemAn.isType.get(varDecl.type);
+		if (semType.actualType() instanceof SemVoid) {
+			throw new Report.Error(varDecl, TAG + "variable cannot be of type 'void'");
+		}
+
+		SemAn.isType.put(varDecl.type, semType);
+		return semType;
+	}
+
+	// EXPRESSIONS
+
 	@Override
 	public SemType visit(AstArrExpr arrExpr, Mode mode) {
-		if (mode != Mode.FEET) return null;
-
 		arrExpr.arr.accept(this, mode);
 		arrExpr.idx.accept(this, mode);
 
@@ -445,7 +213,7 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		SemType elemType = SemAn.ofType.get(arrExpr.idx);
 
 		if (!(arrType.actualType() instanceof SemArr && elemType.actualType() instanceof SemInt)) {
-			throw new Report.Error(arrExpr, "Type error: wrong array addressing (either not array or " +
+			throw new Report.Error(arrExpr, TAG + "wrong array addressing (either not array or " +
 				"non-integer index)");
 		}
 
@@ -454,55 +222,99 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		return type;
 	}
 
-	// Value 11
 	@Override
-	public SemType visit(AstRecExpr recExpr, Mode mode) {
-		if (mode != Mode.FEET) return null;
+	public SemType visit(AstAtomExpr atomExpr, Mode mode) {
+		SemType type = switch(atomExpr.type) {
+			case VOID -> new SemVoid();
+			case POINTER -> new SemPtr(new SemVoid());
+			case STRING -> new SemPtr(new SemChar());
+			case BOOL -> new SemBool();
+			case CHAR -> new SemChar();
+			case INT -> new SemInt();
+		};
 
-		recExpr.rec.accept(this, mode);
+		SemAn.ofType.put(atomExpr, type);
+		return type;
+	}
+	@Override
+	public SemType visit(AstBinExpr binExpr, Mode mode) {
+		SemType fstExprType = binExpr.fstExpr.accept(this, mode).actualType();
+		SemType sndExprType = binExpr.sndExpr.accept(this, mode).actualType();
 
-		SemType recType = SemAn.ofType.get(recExpr.rec);
-		if (!(recType.actualType() instanceof SemRec)) {
-			throw new Report.Error(recExpr, "Type error: not a record");
+		SemType type = null;
+		switch (binExpr.oper) {
+			case AND, OR:
+				if (!(fstExprType instanceof SemBool && sndExprType instanceof SemBool)) {
+					throw new Report.Error(binExpr, TAG + "cannot use operators '&' and '|' in " +
+						"non-boolean expressions");
+				}
+
+				type = new SemBool();
+				break;
+
+			case ADD, SUB, MUL, DIV, MOD:
+				if (!(fstExprType instanceof SemInt && sndExprType instanceof SemInt)) {
+					throw new Report.Error(binExpr, TAG + "cannot use operators '+', '-', '*', '/', " +
+						"'%' in non-integer expressions");
+				}
+
+				type = new SemInt();
+				break;
+
+			case EQU, NEQ:
+				if ((fstExprType instanceof SemBool && sndExprType instanceof SemBool) ||
+					(fstExprType instanceof SemChar && sndExprType instanceof SemChar) ||
+					(fstExprType instanceof SemInt && sndExprType instanceof SemInt) ||
+					(fstExprType instanceof SemPtr && sndExprType instanceof SemPtr)) {
+					type = new SemBool();
+				} else {
+					throw new Report.Error(binExpr, TAG + "cannot use operators '==' and '!=' with " +
+						"a combination of expressions of type " + fstExprType.getClass().getSimpleName() + " and " +
+						sndExprType.getClass().getSimpleName());
+				}
+				break;
+
+			case LEQ, GEQ, LTH, GTH:
+				if ((fstExprType instanceof SemChar && sndExprType instanceof SemChar) ||
+					(fstExprType instanceof SemInt && sndExprType instanceof SemInt) ||
+					(fstExprType instanceof SemPtr && sndExprType instanceof SemPtr)) {
+					type = new SemBool();
+				} else {
+					throw new Report.Error(binExpr, TAG + "cannot use operators '<=', '>=', '<' and " +
+						"'>' with a combination of expressions of type " + fstExprType.getClass().getSimpleName() +
+						" and " + sndExprType.getClass().getSimpleName());
+				}
+				break;
 		}
 
-		AstRecType record = recordTypes.get((SemRec) recType);
-		for (AstCompDecl compDecl: record.comps) {
-			// Check if component actually belongs to the record
-			if (compDecl.name.equals(recExpr.comp.name)) {
-				SemType type = SemAn.isType.get(compDecl.type);
-				SemAn.ofType.put(recExpr, type);
-				return type;
-			}
-		}
-
-		throw new Report.Error(recExpr, "Type error: " + recExpr.comp.name + " has not been declared");
+		SemAn.ofType.put(binExpr, type);
+		return type;
 	}
 
-	// Value 12
 	@Override
 	public SemType visit(AstCallExpr callExpr, Mode mode) {
-		if (mode != Mode.FEET) return null;
-
 		AstDecl decl = SemAn.declaredAt.get(callExpr);
 
 		if (!(decl instanceof AstFunDecl funDecl)) {
-			throw new Report.Error(callExpr, "Type error: not a function declaration");
+			throw new Report.Error(callExpr, TAG + "not a function declaration");
 		}
 
 		if (callExpr.args.size() != funDecl.pars.size()) {
-			throw new Report.Error(callExpr, "Type error: mismatch between number of function parameters");
+			throw new Report.Error(callExpr, TAG + "mismatch between number of function parameters");
 		}
 
 		for (int i = 0; i < callExpr.args.size(); i++) {
 			AstExpr arg = callExpr.args.get(i);
+			AstParDecl parDecl = funDecl.pars.get(i);
+
 			arg.accept(this, mode);
+			parDecl.accept(this, mode);
 
 			SemType argType = SemAn.ofType.get(arg);
 			SemType parType = SemAn.isType.get(funDecl.pars.get(i).type);
 
 			if (!argType.getClass().equals(parType.getClass())) {
-				throw new Report.Error(arg, "Type error: mismatch between declared and called argument type");
+				throw new Report.Error(arg, TAG + "mismatch between declared and called argument type");
 			}
 		}
 
@@ -511,23 +323,8 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		return type;
 	}
 
-	// Value 13
-	@Override
-	public SemType visit(AstStmtExpr stmtExpr, Mode mode) {
-		if (mode != Mode.FEET) return null;
-
-		// Use last statement's index to find its type
-		int lastIndex = stmtExpr.stmts.size() - 1;
-		SemType semType = SemAn.ofType.get(stmtExpr.stmts.get(lastIndex));
-		SemAn.ofType.put(stmtExpr, semType);
-		return semType;
-	}
-
-	// Value 14
 	@Override
 	public SemType visit(AstCastExpr castExpr, Mode mode) {
-		if (mode != Mode.FEET) return null;
-
 		castExpr.expr.accept(this, mode);
 		castExpr.type.accept(this, mode);
 
@@ -540,16 +337,137 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 			(actualCastType instanceof SemChar || actualCastType instanceof SemInt || (actualCastType instanceof
 				SemPtr && (((SemPtr) actualCastType).baseType instanceof SemChar || ((SemPtr) actualCastType).baseType
 				instanceof SemInt))))) {
-			throw new Report.Error(castExpr, "Type error: invalid typecast expression");
+			throw new Report.Error(castExpr, TAG + "invalid typecast expression");
 		}
 
 		SemAn.ofType.put(castExpr, castType);
 		return castType;
 	}
 
-	// Value 15 (left) is not needed
+	@Override
+	public SemType visit(AstNameExpr nameExpr, Mode mode) {
+		AstDecl decl = SemAn.declaredAt.get(nameExpr);
+		SemType type;
 
-	// Value 15 (right)
+		if (decl instanceof AstFunDecl) {
+			if (((AstFunDecl) decl).pars != null) {
+				throw new Report.Error(nameExpr, TAG + "missing arguments for function call");
+			}
+
+			type = SemAn.isType.get(((AstFunDecl) decl).type);
+		} else if (decl instanceof AstVarDecl) {
+			type = SemAn.isType.get(((AstVarDecl) decl).type);
+		} else if (decl instanceof AstParDecl) {
+			type = SemAn.isType.get(((AstParDecl) decl).type);
+		} else {
+			throw new Report.Error(nameExpr, TAG + "you can only declare variables or parameters");
+		}
+
+		SemAn.ofType.put(nameExpr, type);
+		return type;
+	}
+
+	@Override
+	public SemType visit(AstPfxExpr pfxExpr, Mode mode) {
+		pfxExpr.expr.accept(this, mode);
+		SemType exprType = SemAn.ofType.get(pfxExpr.expr).actualType();
+
+		SemType type = null;
+		switch (pfxExpr.oper) {
+			case NOT -> {
+				if (!(exprType instanceof SemBool)) {
+					throw new Report.Error(pfxExpr, TAG + "cannot use negation with non-boolean " +
+						"expression");
+				}
+
+				type = new SemBool();
+			}
+			case ADD, SUB -> {
+				if (!(exprType instanceof SemInt)) {
+					throw new Report.Error(pfxExpr, TAG + "cannot add or subtract from non-integer " +
+						"expression");
+				}
+
+				type = new SemInt();
+			}
+			case PTR -> type = new SemPtr(exprType);
+			case NEW -> {
+				if (!(exprType instanceof SemInt)) {
+					throw new Report.Error(pfxExpr, TAG + "cannot use 'new' with non-integer expression");
+				}
+
+				type = new SemPtr(new SemVoid());
+			}
+			case DEL -> {
+				if (!(exprType instanceof SemPtr)) {
+					throw new Report.Error(pfxExpr, TAG + "cannot use 'del' with non-pointer expression");
+				}
+
+				type = new SemVoid();
+			}
+		}
+
+		SemAn.ofType.put(pfxExpr, type);
+		return type;
+	}
+
+	@Override
+	public SemType visit(AstRecExpr recExpr, Mode mode) {
+		recExpr.rec.accept(this, mode);
+
+		SemType recType = SemAn.ofType.get(recExpr.rec).actualType();
+		if (!(recType instanceof SemRec)) {
+			throw new Report.Error(recExpr, TAG + "not a record");
+		}
+
+		Report.info(recExpr, TAG + recType + ": " + recType);
+		Report.info(recExpr, TAG + "records: " + recordMap);
+
+		SymbTable compNames = recordMap.get((SemRec) recType);
+
+		Report.info(recExpr, TAG + recordMap.get(recType));
+		Report.info(recExpr, TAG + recType);
+
+		AstCompDecl compDecl;
+
+		try {
+			compDecl = (AstCompDecl) compNames.fnd(recExpr.comp.name);
+		} catch (SymbTable.CannotFndNameException e) {
+			throw new Report.Error(recExpr, TAG + "not a component of this record");
+		}
+
+		SemType compType = SemAn.isType.get(compDecl.type);
+		SemAn.ofType.put(recExpr, compType);
+		SemAn.declaredAt.put(recExpr.comp, compDecl);
+		return compType;
+	}
+
+	@Override
+	public SemType visit(AstSfxExpr sfxExpr, Mode mode) {
+		sfxExpr.expr.accept(this, mode);
+		SemType exprType = SemAn.ofType.get(sfxExpr.expr);
+
+		if (!(exprType.actualType() instanceof SemPtr)) {
+			throw new Report.Error(sfxExpr, TAG + sfxExpr.expr + " is not a pointer");
+		}
+
+		SemType type = ((SemPtr) exprType).baseType;
+		SemAn.ofType.put(sfxExpr, type);
+		return type;
+	}
+
+	@Override
+	public SemType visit(AstStmtExpr stmtExpr, Mode mode) {
+		SemType type = null;
+
+		for (AstStmt stmt: stmtExpr.stmts) {
+			type = stmt.accept(this, mode);
+		}
+
+		SemAn.ofType.put(stmtExpr, type);
+		return type;
+	}
+
 	@Override
 	public SemType visit(AstWhereExpr whereExpr, Mode mode) {
 		whereExpr.decls.accept(this, mode);
@@ -560,66 +478,66 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		return semType;
 	}
 
-	/*
-	 * STATEMENTS
-	 */
+	// STATEMENTS
 
-	// Statement 1
 	@Override
 	public SemType visit(AstAssignStmt assignStmt, Mode mode) {
-		if (mode != Mode.FEET) return null;
-
 		assignStmt.src.accept(this, mode);
 		assignStmt.dst.accept(this, mode);
 
 		SemType dstType = SemAn.ofType.get(assignStmt.dst).actualType();
 		SemType srcType = SemAn.ofType.get(assignStmt.src).actualType();
-		SemType type;
 
-		if (!((dstType instanceof SemBool && srcType instanceof SemBool) ||
-			(dstType instanceof SemChar && srcType instanceof SemChar) ||
-			(dstType instanceof SemInt && srcType instanceof SemInt) ||
-			(dstType instanceof SemPtr && srcType instanceof SemPtr &&
-				((SemPtr) dstType).baseType == ((SemPtr) srcType).baseType) &&
-				(((SemPtr) dstType).baseType instanceof SemBool || ((SemPtr) dstType).baseType instanceof SemChar ||
-					((SemPtr) dstType).baseType instanceof SemInt))) {
-			throw new Report.Error(assignStmt, "Type error: invalid types in assignment");
+		if (!(
+			(dstType instanceof SemBool && srcType instanceof SemBool) ||
+				(dstType instanceof SemChar && srcType instanceof SemChar) ||
+				(dstType instanceof SemInt && srcType instanceof SemInt) || (
+				(dstType instanceof SemPtr && srcType instanceof SemPtr) && (
+					(((SemPtr) dstType).baseType instanceof SemBool && ((SemPtr) srcType).baseType instanceof SemBool) ||
+						(((SemPtr) dstType).baseType instanceof SemChar && ((SemPtr) srcType).baseType instanceof SemChar) ||
+						(((SemPtr) dstType).baseType instanceof SemInt && ((SemPtr) srcType).baseType instanceof SemInt)
+				))
+		)) {
+			throw new Report.Error(assignStmt, TAG + "invalid types in assignment");
 		}
 
-			type = new SemVoid();
-			SemAn.ofType.put(assignStmt, type);
-			return type;
+		SemType type = new SemVoid();
+		SemAn.ofType.put(assignStmt, type);
+		return type;
 	}
 
-	// Statement 2
+	@Override
+	public SemType visit(AstExprStmt exprStmt, Mode mode) {
+		SemType type = exprStmt.expr.accept(this, mode);
+		SemAn.ofType.put(exprStmt, type);
+		return type;
+	}
+
 	@Override
 	public SemType visit(AstIfStmt ifStmt, Mode mode) {
-		if (mode != Mode.FEET) return null;
+		SemType condType = ifStmt.cond.accept(this, mode);
 
-		ifStmt.cond.accept(this, mode);
+		Report.info(ifStmt, TAG + "condition type: " + condType);
+
+		if (!(condType.actualType() instanceof SemBool)) {
+			throw new Report.Error(ifStmt, TAG + "if statement condition must be a boolean expression");
+		}
+
 		ifStmt.thenStmt.accept(this, mode);
 		ifStmt.elseStmt.accept(this, mode);
-
-		if (!(SemAn.ofType.get(ifStmt.cond).actualType() instanceof SemBool)) {
-			throw new Report.Error(ifStmt, "Type error: if statement condition must be a boolean expression");
-		}
 
 		SemType semType = new SemVoid();
 		SemAn.ofType.put(ifStmt, semType);
 		return semType;
 	}
 
-	// Statement 3
 	@Override
 	public SemType visit(AstWhileStmt whileStmt, Mode mode) {
-		if (mode != Mode.FEET) return null;
-
 		whileStmt.cond.accept(this, mode);
 		whileStmt.bodyStmt.accept(this, mode);
 
 		if (!(SemAn.ofType.get(whileStmt.cond).actualType() instanceof SemBool)) {
-			throw new Report.Error(whileStmt, "Type error: while statement condition must be a boolean " +
-				"expression");
+			throw new Report.Error(whileStmt, TAG + "while statement condition must be a boolean expression");
 		}
 
 		SemType semType = new SemVoid();
@@ -627,79 +545,104 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		return semType;
 	}
 
-	/*
-	 * DECLARATIONS
-	 */
+	// TYPES
 
-	// Declaration 1
 	@Override
-	public SemType visit(AstTypeDecl typeDecl, Mode mode) {
-		if (mode == Mode.HEAD) {
-			detectRecursiveType(typeDecl.type, new HashSet<>());
-			SemName typeName = new SemName(typeDecl.name);
-			SemAn.declaresType.put(typeDecl, typeName);
-			return typeName;
+	public SemType visit(AstArrType arrType, Mode mode) {
+		SemType elemType = arrType.elemType.accept(this, mode);
+		arrType.numElems.accept(this, mode);
+
+		if (elemType.actualType() instanceof SemVoid) {
+			throw new Report.Error(arrType, TAG + "array element cannot be of type 'void'");
 		}
 
-		if (mode == Mode.BODY) {
-			SemType type = typeDecl.type.accept(this, mode);
-			SemAn.declaresType.get(typeDecl).define(type);
-			return type;
+		if (!(arrType.numElems instanceof AstAtomExpr)) {
+			throw new Report.Error(arrType, TAG + "array index must be of type 'int'");
 		}
 
-		return typeDecl.type.accept(this, mode);
+		if (((AstAtomExpr) arrType.numElems).type != AstAtomExpr.Type.INT) {
+			throw new Report.Error(arrType, TAG + "array index must be of type 'int'");
+		}
+
+		long numElems;
+		try {
+			numElems = Long.parseLong(((AstAtomExpr) arrType.numElems).value);
+		} catch (NumberFormatException nfe) {
+			throw new Report.Error(arrType, TAG + "invalid array size");
+		}
+
+		if (numElems < 0) {
+			throw new Report.Error(arrType, TAG + "array index cannot be negative");
+		}
+
+		SemType type = new SemArr(elemType, numElems);
+		SemAn.isType.put(arrType, type);
+		return type;
 	}
 
-	// Declaration 2
 	@Override
-	public SemType visit(AstVarDecl varDecl, Mode mode) {
-		if (mode != Mode.BODY) return null;
+	public SemType visit(AstAtomType atomType, Mode mode) {
+		SemType type = switch (atomType.type) {
+			case VOID -> new SemVoid();
+			case CHAR -> new SemChar();
+			case INT -> new SemInt();
+			case BOOL -> new SemBool();
+		};
 
-		varDecl.type.accept(this, mode);
-
-		SemType semType = SemAn.isType.get(varDecl.type);
-
-		if (semType.actualType() instanceof SemVoid) {
-			throw new Report.Error(varDecl, "Type error: variable cannot be of type 'void'");
-		}
-
-		SemName semName = new SemName(varDecl.name);
-		semName.define(semType);
-		SemAn.isType.put(varDecl.type, semType);
-		return semType;
+		SemAn.isType.put(atomType, type);
+		return type;
 	}
 
-	// Function declarations (3 & 4)
 	@Override
-	public SemType visit(AstFunDecl funDecl, Mode mode) {
-		if (mode != Mode.BODY) return null;
-
-		//Report.info(funDecl, "Accepted params (" + funDecl.name + "): " + funDecl.pars);
-
-		funDecl.pars.accept(this, mode);
-
-		SemType funTyp = funDecl.type.accept(this, mode);
-		SemType funType = funTyp.actualType();
-
-		// Check function's return type
-		if (!(funType instanceof SemVoid || funType instanceof SemBool || funType instanceof SemChar
-			|| funType instanceof SemInt || (funType instanceof SemPtr && !(((SemPtr) funType).baseType instanceof
-			SemVoid || ((SemPtr) funType).baseType instanceof SemBool || ((SemPtr) funType).baseType instanceof SemChar
-			|| ((SemPtr) funType).baseType instanceof SemInt)))) {
-			throw new Report.Error(funDecl, "Type error: invalid function type " + funTyp);
+	public SemType visit(AstNameType nameType, Mode mode) {
+		// Get declaration from name
+		AstDecl nameDecl = SemAn.declaredAt.get(nameType);
+		if (!(nameDecl instanceof AstTypeDecl)) {
+			throw new Report.Error(nameType, TAG + "undeclared type");
 		}
 
-		if (funDecl.expr != null) {
-			SemType exprType = funDecl.expr.accept(this, mode);
+		// Get semantic name from type declaration
+		SemType type = SemAn.declaresType.get((AstTypeDecl) nameDecl);
+		SemAn.isType.put(nameType, type);
+		return type;
+	}
 
-			// Check if function expression matches return type
-			if (exprType != null && !funType.getClass().equals(exprType.getClass())) {
-				throw new Report.Error(funDecl, "Type error: mismatch between function expression and " +
-					"return types");
+	@Override
+	public SemType visit(AstPtrType ptrType, Mode mode) {
+		SemType baseType = ptrType.baseType.accept(this, mode);
+		if (baseType == null) {
+			throw new Report.Error(ptrType, TAG + "undeclared pointer type");
+		}
+
+		SemType type = new SemPtr(baseType);
+		SemAn.isType.put(ptrType, type);
+		return type;
+	}
+
+	@Override
+	public SemType visit(AstRecType recType, Mode mode) {
+		// Create a new symbol table and component type table for the record
+		SymbTable compNames = new SymbTable();
+		Vector<SemType> compTypes = new Vector<>();
+
+		for (AstCompDecl comp : recType.comps) {
+			SemType compType = comp.accept(this, mode);
+			if (compType.actualType() instanceof SemVoid) {
+				throw new Report.Error(comp, TAG + "record component must be non-void");
 			}
+
+			try {
+				compNames.ins(comp.name, comp);
+			} catch (SymbTable.CannotInsNameException e) {
+				throw new Report.Error(comp, TAG + "could not insert component name into symbol table");
+			}
+
+			compTypes.add(SemAn.isType.get(comp.type));
 		}
 
-		SemAn.isType.put(funDecl.type, funTyp);
-		return funTyp;
+		SemRec rec = new SemRec(compTypes);
+		SemAn.isType.put(recType, rec);
+		recordMap.put(rec, compNames);
+		return rec;
 	}
 }
