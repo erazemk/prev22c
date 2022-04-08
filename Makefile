@@ -1,4 +1,5 @@
 phase = all
+debug =
 
 all: help
 
@@ -22,10 +23,10 @@ help:
 test:
     ifdef file
 		$(MAKE) -s -C prev22 clean all
-		$(MAKE) -s -C prev22/prg "$(file)" PHASE="$(phase)"
+		$(MAKE) -s -C prev22/prg "$(file)" PHASE="$(phase)" DEBUG="$(debug)"
     else
 		@echo "Test file must be specified!"
-		@echo "Usage: make test file=<file> (phase=<phase>)"
+		@echo "Usage: make test file=<file> (phase=<phase>) (debug=<bool>)"
     endif
 
 zip:
