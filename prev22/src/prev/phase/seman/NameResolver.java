@@ -25,6 +25,9 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 		BODY // For checking if all right values are defined on the left (so in symbTable)
 	}
 
+	// Identifier for info reports
+	private final String TAG = "[NameResolver]: ";
+
 	// Global symbol table to check mismatches in declarations
 	private final SymbTable symbTable = new SymbTable();
 
@@ -39,7 +42,7 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 			try {
 				symbTable.ins(name, astDecl);
 			} catch (SymbTable.CannotInsNameException e) {
-				throw new Report.Error(astDecl, "Semantic error: '" + name + "' has already been declared");
+				throw new Report.Error(astDecl, TAG + "'" + name + "' has already been declared");
 			}
 		} else if (mode == Mode.BODY) {
 			// If second pass, get the type's name
@@ -85,7 +88,7 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 			try {
 				symbTable.ins(funDecl.name, funDecl);
 			} catch (SymbTable.CannotInsNameException e) {
-				throw new Report.Error(funDecl, "Semantic error: '" + funDecl.name + "' has already been declared");
+				throw new Report.Error(funDecl, TAG + "'" + funDecl.name + "' has already been declared");
 			}
 		// 2nd pass check the function's parameters and expression
 		} else if (mode == Mode.BODY) {
@@ -138,7 +141,7 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 		try {
 			SemAn.declaredAt.put(callExpr, symbTable.fnd(callExpr.name));
 		} catch (SymbTable.CannotFndNameException e) {
-			throw new Report.Error(callExpr, "Semantic error: could not find call expression '" + callExpr.name + "'");
+			throw new Report.Error(callExpr, TAG + "could not find call expression '" + callExpr.name + "'");
 		}
 
 		// Name resolve the expression's arguments
@@ -156,7 +159,7 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 		try {
 			SemAn.declaredAt.put(nameExpr, symbTable.fnd(nameExpr.name));
 		} catch (SymbTable.CannotFndNameException e) {
-			throw new Report.Error(nameExpr, "Semantic error: could not find name expression '" + nameExpr.name + "'");
+			throw new Report.Error(nameExpr, TAG + "could not find name expression '" + nameExpr.name + "'");
 		}
 
 		return null;
@@ -196,7 +199,7 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 		try {
 			SemAn.declaredAt.put(nameType, symbTable.fnd(nameType.name));
 		} catch (SymbTable.CannotFndNameException e) {
-			throw new Report.Error(nameType, "Semantic error: could not find name type '" + nameType.name + "'");
+			throw new Report.Error(nameType, TAG + "could not find name type '" + nameType.name + "'");
 		}
 
 		return null;
