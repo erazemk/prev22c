@@ -1,5 +1,7 @@
 package prev.common.report;
 
+import prev.Compiler;
+
 /**
  * Reporting.
  */
@@ -10,7 +12,7 @@ public class Report {
 
 	/**
 	 * Returns the number of information messages printed out.
-	 * 
+	 *
 	 * @return The number of information messages printed out.
 	 */
 	public static int numOfInfos() {
@@ -19,27 +21,31 @@ public class Report {
 
 	/**
 	 * Prints out an information message.
-	 * 
+	 *
 	 * @param message The information message to be printed.
 	 */
 	public static void info(String message) {
-		numOfInfos++;
-		System.out.print(":-) ");
-		System.out.println(message);
+		if (Compiler.debug) {
+			numOfInfos++;
+			System.out.print(":-) ");
+			System.out.println(message);
+		}
 	}
 
 	/**
 	 * Prints out an information message relating to the specified part of the
 	 * source file.
-	 * 
+	 *
 	 * @param location Location the information message is related to.
 	 * @param message  The information message to be printed.
 	 */
 	public static void info(Locatable location, String message) {
-		numOfInfos++;
-		System.out.print(":-) ");
-		System.out.print("[" + location.location() + "] ");
-		System.out.println(message);
+		if (Compiler.debug) {
+			numOfInfos++;
+			System.out.print(":-) ");
+			System.out.print("[" + location.location() + "] ");
+			System.out.println(message);
+		}
 	}
 
 	/** Counter of warnings printed out. */
@@ -47,7 +53,7 @@ public class Report {
 
 	/**
 	 * Returns the number of warnings printed out.
-	 * 
+	 *
 	 * @return The number of warnings printed out.
 	 */
 	public static int numOfWarnings() {
@@ -56,7 +62,7 @@ public class Report {
 
 	/**
 	 * Prints out a warning.
-	 * 
+	 *
 	 * @param message The warning message.
 	 */
 	public static void warning(String message) {
@@ -67,7 +73,7 @@ public class Report {
 
 	/**
 	 * Prints out a warning relating to the specified part of the source file.
-	 * 
+	 *
 	 * @param location Location the warning message is related to.
 	 * @param message  The warning message to be printed.
 	 */
@@ -80,7 +86,7 @@ public class Report {
 
 	/**
 	 * An error.
-	 * 
+	 *
 	 * Thrown whenever the program reaches a situation where any further computing
 	 * makes no sense any more because of the erroneous input.
 	 */
@@ -89,7 +95,7 @@ public class Report {
 
 		/**
 		 * Constructs a new error.
-		 * 
+		 *
 		 * @param message The error message.
 		 */
 		public Error(String message) {
@@ -100,7 +106,7 @@ public class Report {
 
 		/**
 		 * Constructs a new error relating to the specified part of the source file.
-		 * 
+		 *
 		 * @param location Location the error message is related to.
 		 * @param message  The error message.
 		 */
@@ -114,7 +120,7 @@ public class Report {
 
 	/**
 	 * An internal error.
-	 * 
+	 *
 	 * Thrown whenever the program encounters internal error.
 	 */
 	@SuppressWarnings("serial")

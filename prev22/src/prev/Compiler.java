@@ -21,6 +21,9 @@ public class Compiler {
 	/** All valid phases of the compiler. */
 	private static final String phases = "none|lexan|synan|abstr|seman|memory";
 
+	/** A flag for enabling the printing of Report.info messages */
+	public static boolean debug = false;
+
 	/** Values of command line arguments. */
 	private static HashMap<String, String> cmdLine = new HashMap<String, String>();
 
@@ -50,6 +53,10 @@ public class Compiler {
 			for (int argc = 0; argc < args.length; argc++) {
 				if (args[argc].startsWith("--")) {
 					// Command-line switch.
+					if (args[argc].matches("--debug")) {
+						debug = true;
+						continue;
+					}
 					if (args[argc].matches("--src-file-name=.*")) {
 						if (cmdLine.get("--src-file-name") == null) {
 							cmdLine.put("--src-file-name", args[argc]);
