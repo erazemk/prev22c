@@ -28,6 +28,8 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 	// Global symbol table to check mismatches in declarations
 	private final SymbTable symbTable = new SymbTable();
 
+	// GENERAL PURPOSE
+
 	// Helper method for declarations
 	public Object addOrAccept(AstDecl astDecl, Mode mode) {
 		if (mode == Mode.HEAD) {
@@ -73,6 +75,8 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 
 		return null;
 	}
+
+	// DECLARATIONS
 
 	@Override
 	public Object visit(AstFunDecl funDecl, Mode mode) {
@@ -123,6 +127,8 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 	public Object visit(AstVarDecl varDecl, Mode mode) {
 		return addOrAccept(varDecl, mode);
 	}
+
+	// EXPRESSIONS
 
 	@Override
 	public Object visit(AstCallExpr callExpr, Mode mode) {
@@ -179,6 +185,8 @@ public class NameResolver extends AstFullVisitor<Object, NameResolver.Mode> {
 		symbTable.oldScope();
 		return null;
 	}
+
+	// TYPES
 
 	@Override
 	public Object visit(AstNameType nameType, NameResolver.Mode mode) {

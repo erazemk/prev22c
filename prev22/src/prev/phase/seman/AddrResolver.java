@@ -20,10 +20,27 @@ import prev.data.typ.SemType;
  */
 public class AddrResolver extends AstFullVisitor<Object, Object> {
 
+	// GENERAL PURPOSE
+
 	@Override
 	public Object visit(AstTrees<? extends AstTree> trees, Object mode) {
 		for (AstTree t : trees) {
 			if (t != null) t.accept(this, mode);
+		}
+
+		return null;
+	}
+
+	// EXPRESSIONS
+
+	@Override
+	public Object visit(AstArrExpr arrExpr, Object mode) {
+		arrExpr.arr.accept(this, mode);
+		arrExpr.idx.accept(this, mode);
+		Boolean isAddr = SemAn.isAddr.get(arrExpr.arr);
+
+		if (isAddr != null && isAddr) {
+			SemAn.isAddr.put(arrExpr, true);
 		}
 
 		return null;
@@ -41,30 +58,6 @@ public class AddrResolver extends AstFullVisitor<Object, Object> {
 	}
 
 	@Override
-	public Object visit(AstSfxExpr sfxExpr, Object mode) {
-		SemType type = (SemType) sfxExpr.expr.accept(this, mode);
-
-		if (type instanceof SemPtr) {
-			SemAn.isAddr.put(sfxExpr, true);
-		}
-
-		return null;
-	}
-
-	@Override
-	public Object visit(AstArrExpr arrExpr, Object mode) {
-		arrExpr.arr.accept(this, mode);
-		arrExpr.idx.accept(this, mode);
-		Boolean isAddr = SemAn.isAddr.get(arrExpr.arr);
-
-		if (isAddr != null && isAddr) {
-			SemAn.isAddr.put(arrExpr, true);
-		}
-
-		return null;
-	}
-
-	@Override
 	public Object visit(AstRecExpr recExpr, Object mode) {
 		recExpr.rec.accept(this, mode);
 		recExpr.comp.accept(this, mode);
@@ -76,6 +69,19 @@ public class AddrResolver extends AstFullVisitor<Object, Object> {
 
 		return null;
 	}
+
+	@Override
+	public Object visit(AstSfxExpr sfxExpr, Object mode) {
+		SemType type = (SemType) sfxExpr.expr.accept(this, mode);
+
+		if (type instanceof SemPtr) {
+			SemAn.isAddr.put(sfxExpr, true);
+		}
+
+		return null;
+	}
+
+	// STATEMENTS
 
 	@Override
 	public Object visit(AstAssignStmt assignStmt, Object mode) {

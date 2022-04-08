@@ -26,6 +26,8 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 		long locsSize = 0;
 	}
 
+	// DECLARATIONS
+
 	@Override
 	public Object visit(AstCompDecl compDecl, Context context) {
 		compDecl.type.accept(this, context);
@@ -56,7 +58,6 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 
 		// Evaluate parameters' size
 		if (funDecl.pars != null) {
-			//Report.info(funDecl, "MemEvaluator: evaluating params (" + funDecl.name + "): " + funDecl.pars);
 			funDecl.pars.accept(this, newContext);
 		}
 
@@ -89,15 +90,12 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 
 	@Override
 	public Object visit(AstParDecl parDecl, Context context) {
-		//Report.info(parDecl, "Param: " + parDecl.name);
 
 		// Evaluate type's size
 		parDecl.type.accept(this, context);
 
 		// Get the parameter's type to calculate size
 		SemType type = SemAn.isType.get(parDecl.type);
-
-		//Report.info(parDecl, "Param type (" + parDecl.name + "): " + type);
 
 		// Create a new relative variable
 		MemRelAccess relAccess = new MemRelAccess(type.size(), context.offset, context.depth);
@@ -115,15 +113,11 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 
 	@Override
 	public Object visit(AstVarDecl varDecl, Context context) {
-		//Report.info(varDecl, "Variable: " + varDecl.name);
-
 		// Evaluate type's size
 		varDecl.type.accept(this, context);
 
 		// Get variable's type to calculate size
 		SemType type = SemAn.isType.get(varDecl.type);
-
-		//Report.info(varDecl, "Variable size " + type.size());
 
 		// If top level variable, the context will be null
 		if (context == null) {
@@ -143,6 +137,8 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 
 		return null;
 	}
+
+	// EXPRESSIONS
 
 	@Override
 	public Object visit(AstAtomExpr atomExpr, Context context) {
@@ -184,6 +180,8 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.Context> {
 
 		return null;
 	}
+
+	// TYPES
 
 	@Override
 	public Object visit(AstRecType recType, Context context) {
