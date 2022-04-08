@@ -1,4 +1,8 @@
-fun i() : int = {
-	stmt = 2;
-	if a < b then c else d;
+var niz : ^char
+fun f (a : int) : void = {
+	niz = "jaz sem \"niz\"";
+	g(5,6,7) where {
+		var b : int
+		fun g(a : int, b : int, c: int) : void = none
+	};
 }

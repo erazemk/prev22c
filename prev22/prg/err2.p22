@@ -1,3 +1,0 @@
-fun a () : void = {
-if a then b ;
-}

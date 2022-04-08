@@ -18,7 +18,7 @@ typ tabela_rec = [2]{ a : int, b : ^char }
 # typ prevelika_tabela = [123412341241231241212344]char
 # typ neki = ["helo"]char
 # typ void_tabela = [5]void
-# typ tabela_void = [+42]crna_lukna
+# typ tabela_void = [42]crna_lukna
 # typ is_it_void = [1]crna_lukna2
 
 # Ptr types

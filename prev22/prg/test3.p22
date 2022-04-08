@@ -1,37 +1,23 @@
-typ iden = { k : x, z : void}
-var test123 : ^x
-var i : int
-var x : int
-var y : int
-var yy : int
-var xx: int
-var zz: int
-var z : int
+var i:int
+var x:int
+typ tipck = int
 
-fun main(k : int) : int = {
+fun f(x : tipck) : void = {
+	i = i + 1;
 
-    i = 0;
-    while i < 10 do
-	x = i + 1 * 3
-    ;
+	f(x + 1) - g(f(y - x))
+	where {
+		var x:int
+		fun f(t : int) : int = g(t) + 1
+		var y:int
+		fun g(h : int) : int = g(h) - f(h + 1)
+	};
 
-    test123 = (x & y);
+	#h = 0; 	# error, not visible here
 
-    yy = main(12);
-    xx = main();
-    zz = main(12, 10);
+	x = x + 1; 	# x param, ne zunanji x
+}
 
-    z where {
-	var z : int
-    };
+#fun g(y : zmankal) : void # error, ne obstaja tip
 
-    new z[(10 : [10] void)];
-
-    z^ = ( 10 : [20]bool);
-
-    if x
-    then 30 = 30
-    else !x = {
-	test123(x + 1, 1) = (i % 10); (10 : ({ yy : ^void}));
-    };
- }
+#var x:int  	# error, already defined

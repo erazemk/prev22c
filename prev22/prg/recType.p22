@@ -1,2 +1,0 @@
-typ c = {k : int, ime : int }
-typ b = {a : c, d : c}
