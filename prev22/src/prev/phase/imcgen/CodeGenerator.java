@@ -9,6 +9,7 @@ import prev.data.ast.tree.expr.*;
 import prev.data.ast.tree.stmt.*;
 import prev.data.ast.tree.type.*;
 import prev.data.ast.visitor.*;
+import prev.data.imc.code.ImcInstr;
 import prev.data.imc.code.expr.*;
 import prev.data.imc.code.stmt.*;
 import prev.data.mem.*;
@@ -16,7 +17,7 @@ import prev.data.typ.*;
 import prev.phase.memory.*;
 import prev.phase.seman.SemAn;
 
-public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
+public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 
 	// GENERAL PURPOSE
 
@@ -24,7 +25,7 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 	private final String TAG = "[CodeGenerator]: ";
 
 	@Override
-	public Object visit(AstTrees<? extends AstTree> trees, Stack<MemFrame> frames) {
+	public ImcInstr visit(AstTrees<? extends AstTree> trees, Stack<MemFrame> frames) {
 		for (AstTree t : trees) {
 			if (t != null) {
 				t.accept(this, frames);
@@ -256,6 +257,12 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcStmt visit(AstExprStmt exprStmt, Stack<MemFrame> frames) {
+		// Get the expression
+		ImcExpr expr = (ImcExpr) exprStmt.expr.accept(this, frames);
+
+		// Create a new expression statement
+		ImcStmt stmt = new ImcESTMT(expr);
+		ImcGen.stmtImc.put(exprStmt, stmt);
 		return null;
 	}
 
