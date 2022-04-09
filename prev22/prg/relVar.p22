@@ -1,0 +1,5 @@
+fun f(x: int) : int = x where {
+	fun g(y : int) : int = x+y where {
+		fun h(z : int) : int = x+y+z
+	}
+}

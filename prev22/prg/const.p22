@@ -1,0 +1,7 @@
+fun a() : char = 'a'
+fun b() : int = -12345
+fun c() : int = +12345
+fun d() : ^char = "string"
+fun e() : bool = true
+fun f() : bool = false
+fun g() : ^void = nil

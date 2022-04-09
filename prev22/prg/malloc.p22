@@ -1,0 +1,2 @@
+fun malloc(n : int) : ^void = new n
+fun free(a : ^void) : void =  del a
