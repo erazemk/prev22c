@@ -2,6 +2,7 @@ package prev.phase.imcgen;
 
 import java.util.*;
 
+import prev.common.report.Report;
 import prev.data.ast.tree.*;
 import prev.data.ast.tree.decl.*;
 import prev.data.ast.tree.expr.*;
@@ -101,6 +102,7 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 			case NOT -> new ImcUNOP(ImcUNOP.Oper.NOT, subExpr);
 			case ADD -> subExpr;
 			case SUB -> new ImcUNOP(ImcUNOP.Oper.NEG, subExpr);
+			case PTR -> ((ImcMEM) subExpr).addr; // Return the address of the subexpression
 			default -> null;
 		};
 
@@ -115,7 +117,12 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstSfxExpr sfxExpr, Stack<MemFrame> frame) {
-		return null;
+		// Get subexpression
+		ImcExpr subExpr = (ImcExpr) sfxExpr.expr.accept(this, frame);
+
+		ImcMEM memAccess = new ImcMEM(subExpr);
+		ImcGen.exprImc.put(sfxExpr, memAccess);
+		return memAccess;
 	}
 
 	@Override
