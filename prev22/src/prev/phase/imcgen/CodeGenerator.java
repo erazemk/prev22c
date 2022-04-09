@@ -13,10 +13,14 @@ import prev.data.imc.code.expr.*;
 import prev.data.imc.code.stmt.*;
 import prev.data.mem.*;
 import prev.phase.memory.*;
+import prev.phase.seman.SemAn;
 
 public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	// GENERAL PURPOSE
+
+	// Identifier for info reports
+	private final String TAG = "[CodeGenerator]: ";
 
 	@Override
 	public Object visit(AstTrees<? extends AstTree> trees, Stack<MemFrame> frame) {
@@ -91,7 +95,41 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstNameExpr nameExpr, Stack<MemFrame> frame) {
-		return null;
+		// Get the original declaration
+		AstDecl decl = SemAn.declaredAt.get(nameExpr);
+
+		if (!(decl instanceof AstMemDecl memDecl)) {
+			throw new Report.Error(nameExpr, TAG + "not a memory declaration");
+		}
+
+		// Get the variable from memory
+		MemAccess memAccess = Memory.accesses.get(memDecl);
+
+		ImcExpr addr;
+		// Memory access can be relative or absolute
+		if (memAccess instanceof MemAbsAccess absAccess) {
+			// Absolute is easy, just get the label
+			addr = new ImcNAME(absAccess.label);
+		} else {
+			// If relative we have to calculate offsets
+			MemRelAccess relAccess = (MemRelAccess) memAccess;
+
+			/* FP holds the location of the previous one, so we need to go n-levels up (delta of depths times)
+				and then get the variable at the offset of the last level */
+			int deltaDepth = (frame.size() - 1) - relAccess.depth;
+			ImcExpr tempFP = new ImcTEMP(frame.peek().FP);
+
+			for (int i = 0; i < deltaDepth; i++) {
+				tempFP = new ImcMEM(tempFP);
+			}
+
+			// addr == location of the last FP + offset of the variable in that frame
+			addr = new ImcBINOP(ImcBINOP.Oper.ADD, tempFP, new ImcCONST(relAccess.offset));
+		}
+
+		ImcExpr expr = new ImcMEM(addr);
+		ImcGen.exprImc.put(nameExpr, expr);
+		return expr;
 	}
 
 	@Override
