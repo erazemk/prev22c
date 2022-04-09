@@ -53,7 +53,28 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstBinExpr binExpr, Stack<MemFrame> frame) {
-		return null;
+		// Get subexpressions
+		ImcExpr subExpr1 = (ImcExpr) binExpr.fstExpr.accept(this, frame);
+		ImcExpr subExpr2 = (ImcExpr) binExpr.sndExpr.accept(this, frame);
+
+		ImcExpr expr = switch (binExpr.oper) {
+			case OR -> new ImcBINOP(ImcBINOP.Oper.OR, subExpr1, subExpr2);
+			case AND -> new ImcBINOP(ImcBINOP.Oper.AND, subExpr1, subExpr2);
+			case EQU -> new ImcBINOP(ImcBINOP.Oper.EQU, subExpr1, subExpr2);
+			case NEQ -> new ImcBINOP(ImcBINOP.Oper.NEQ, subExpr1, subExpr2);
+			case LTH -> new ImcBINOP(ImcBINOP.Oper.LTH, subExpr1, subExpr2);
+			case GTH -> new ImcBINOP(ImcBINOP.Oper.GTH, subExpr1, subExpr2);
+			case LEQ -> new ImcBINOP(ImcBINOP.Oper.LEQ, subExpr1, subExpr2);
+			case GEQ -> new ImcBINOP(ImcBINOP.Oper.GEQ, subExpr1, subExpr2);
+			case ADD -> new ImcBINOP(ImcBINOP.Oper.ADD, subExpr1, subExpr2);
+			case SUB -> new ImcBINOP(ImcBINOP.Oper.SUB, subExpr1, subExpr2);
+			case MUL -> new ImcBINOP(ImcBINOP.Oper.MUL, subExpr1, subExpr2);
+			case DIV -> new ImcBINOP(ImcBINOP.Oper.DIV, subExpr1, subExpr2);
+			case MOD -> new ImcBINOP(ImcBINOP.Oper.MOD, subExpr1, subExpr2);
+		};
+
+		ImcGen.exprImc.put(binExpr, expr);
+		return expr;
 	}
 
 	@Override
