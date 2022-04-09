@@ -108,12 +108,25 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstCallExpr callExpr, Stack<MemFrame> frames) {
+		// TODO (EX12)
 		return null;
 	}
 
 	@Override
 	public ImcExpr visit(AstCastExpr castExpr, Stack<MemFrame> frames) {
-		return null;
+		// Get the subexpression
+		ImcExpr expr = (ImcExpr) castExpr.expr.accept(this, frames);
+
+		// Resolve the type
+		SemType type = SemAn.isType.get(castExpr.type);
+
+		// If the type is a character use mod(256)
+		if (type.actualType() instanceof SemChar) {
+			expr = new ImcBINOP(ImcBINOP.Oper.MOD, expr, new ImcCONST(256));
+		}
+
+		ImcGen.exprImc.put(castExpr, expr);
+		return expr;
 	}
 
 	@Override
@@ -218,6 +231,7 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstStmtExpr stmtExpr, Stack<MemFrame> frames) {
+		// TODO (EX13)
 		return null;
 	}
 
