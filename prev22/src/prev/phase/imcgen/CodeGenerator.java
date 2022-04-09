@@ -26,12 +26,26 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 
 	@Override
 	public ImcInstr visit(AstTrees<? extends AstTree> trees, Stack<MemFrame> frames) {
+		if (frames == null) {
+			frames = new Stack<>();
+		}
+
 		for (AstTree t : trees) {
-			if (t != null) {
+			if (t instanceof AstFunDecl) {
 				t.accept(this, frames);
 			}
 		}
 
+		return null;
+	}
+
+	// DECLARATIONS
+
+	@Override
+	public ImcInstr visit(AstFunDecl funDecl, Stack<MemFrame> frames) {
+		frames.push(Memory.frames.get(funDecl));
+		funDecl.expr.accept(this, frames);
+		frames.pop();
 		return null;
 	}
 
@@ -71,7 +85,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 			case VOID -> new ImcCONST(42); // Null returns random value (undefined)
 			case POINTER -> new ImcCONST(0); // Nil returns 0
 			case BOOL -> new ImcCONST((atomExpr.value.equals("true")) ? 1 : 0); // Bool returns 0 or 1
-			case CHAR -> new ImcCONST(atomExpr.value.charAt(0)); // ASCII value
+			case CHAR -> new ImcCONST(atomExpr.value.length() == 3 ? atomExpr.value.charAt(1) : atomExpr.value.charAt(2)); // ASCII value (position changes if escaped single quote)
 			case INT -> new ImcCONST(Long.parseLong(atomExpr.value)); // Parsed value
 			case STRING -> new ImcNAME(Memory.strings.get(atomExpr).label); // Returns the address of the label
 		};
