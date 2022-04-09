@@ -19,6 +19,12 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public Object visit(AstTrees<? extends AstTree> trees, Stack<MemFrame> frame) {
+		for (AstTree t : trees) {
+			if (t != null) {
+				t.accept(this, frame);
+			}
+		}
+
 		return null;
 	}
 
