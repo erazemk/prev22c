@@ -37,7 +37,18 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstAtomExpr atomExpr, Stack<MemFrame> frame) {
-		return null;
+		// Convert to constant or address based on type
+		ImcExpr expr = switch (atomExpr.type) {
+			case VOID -> new ImcCONST(42); // Null returns random value (undefined)
+			case POINTER -> new ImcCONST(0); // Nil returns 0
+			case BOOL -> new ImcCONST((atomExpr.value.equals("true")) ? 1 : 0); // Bool returns 0 or 1
+			case CHAR -> new ImcCONST(atomExpr.value.charAt(0)); // ASCII value
+			case INT -> new ImcCONST(Long.parseLong(atomExpr.value)); // Parsed value
+			case STRING -> new ImcNAME(Memory.strings.get(atomExpr).label); // Returns the address of the label
+		};
+
+		ImcGen.exprImc.put(atomExpr, expr);
+		return expr;
 	}
 
 	@Override
