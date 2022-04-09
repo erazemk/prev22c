@@ -23,10 +23,10 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 	private final String TAG = "[CodeGenerator]: ";
 
 	@Override
-	public Object visit(AstTrees<? extends AstTree> trees, Stack<MemFrame> frame) {
+	public Object visit(AstTrees<? extends AstTree> trees, Stack<MemFrame> frames) {
 		for (AstTree t : trees) {
 			if (t != null) {
-				t.accept(this, frame);
+				t.accept(this, frames);
 			}
 		}
 
@@ -36,12 +36,12 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 	// EXPRESSIONS
 
 	@Override
-	public ImcExpr visit(AstArrExpr arrExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstArrExpr arrExpr, Stack<MemFrame> frames) {
 		return null;
 	}
 
 	@Override
-	public ImcExpr visit(AstAtomExpr atomExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstAtomExpr atomExpr, Stack<MemFrame> frames) {
 		// Convert to constant or address based on type
 		ImcExpr expr = switch (atomExpr.type) {
 			case VOID -> new ImcCONST(42); // Null returns random value (undefined)
@@ -57,10 +57,10 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 	}
 
 	@Override
-	public ImcExpr visit(AstBinExpr binExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstBinExpr binExpr, Stack<MemFrame> frames) {
 		// Get subexpressions
-		ImcExpr subExpr1 = (ImcExpr) binExpr.fstExpr.accept(this, frame);
-		ImcExpr subExpr2 = (ImcExpr) binExpr.sndExpr.accept(this, frame);
+		ImcExpr subExpr1 = (ImcExpr) binExpr.fstExpr.accept(this, frames);
+		ImcExpr subExpr2 = (ImcExpr) binExpr.sndExpr.accept(this, frames);
 
 		ImcBINOP.Oper oper = switch (binExpr.oper) {
 			case OR -> ImcBINOP.Oper.OR;
@@ -84,17 +84,17 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 	}
 
 	@Override
-	public ImcExpr visit(AstCallExpr callExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstCallExpr callExpr, Stack<MemFrame> frames) {
 		return null;
 	}
 
 	@Override
-	public ImcExpr visit(AstCastExpr castExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstCastExpr castExpr, Stack<MemFrame> frames) {
 		return null;
 	}
 
 	@Override
-	public ImcExpr visit(AstNameExpr nameExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstNameExpr nameExpr, Stack<MemFrame> frames) {
 		// Get the original declaration
 		AstDecl decl = SemAn.declaredAt.get(nameExpr);
 
@@ -116,8 +116,8 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 			/* FP holds the location of the previous one, so we need to go n-levels up (delta of depths times)
 				and then get the variable at the offset of the last level */
-			int deltaDepth = (frame.size() - 1) - relAccess.depth;
-			ImcExpr tempFP = new ImcTEMP(frame.peek().FP);
+			int deltaDepth = (frames.size() - 1) - relAccess.depth;
+			ImcExpr tempFP = new ImcTEMP(frames.peek().FP);
 
 			for (int i = 0; i < deltaDepth; i++) {
 				tempFP = new ImcMEM(tempFP);
@@ -133,9 +133,9 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 	}
 
 	@Override
-	public ImcExpr visit(AstPfxExpr pfxExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstPfxExpr pfxExpr, Stack<MemFrame> frames) {
 		// Get subexpression
-		ImcExpr subExpr = (ImcExpr) pfxExpr.expr.accept(this, frame);
+		ImcExpr subExpr = (ImcExpr) pfxExpr.expr.accept(this, frames);
 
 		ImcExpr expr = switch (pfxExpr.oper) {
 			case NOT -> new ImcUNOP(ImcUNOP.Oper.NOT, subExpr);
@@ -151,14 +151,14 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 	}
 
 	@Override
-	public ImcExpr visit(AstRecExpr recExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstRecExpr recExpr, Stack<MemFrame> frames) {
 		return null;
 	}
 
 	@Override
-	public ImcExpr visit(AstSfxExpr sfxExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstSfxExpr sfxExpr, Stack<MemFrame> frames) {
 		// Get subexpression
-		ImcExpr subExpr = (ImcExpr) sfxExpr.expr.accept(this, frame);
+		ImcExpr subExpr = (ImcExpr) sfxExpr.expr.accept(this, frames);
 
 		ImcMEM memAccess = new ImcMEM(subExpr);
 		ImcGen.exprImc.put(sfxExpr, memAccess);
@@ -166,34 +166,34 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 	}
 
 	@Override
-	public ImcExpr visit(AstStmtExpr stmtExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstStmtExpr stmtExpr, Stack<MemFrame> frames) {
 		return null;
 	}
 
 	@Override
-	public ImcExpr visit(AstWhereExpr whereExpr, Stack<MemFrame> frame) {
+	public ImcExpr visit(AstWhereExpr whereExpr, Stack<MemFrame> frames) {
 		return null;
 	}
 
 	// STATEMENTS
 
 	@Override
-	public ImcStmt visit(AstAssignStmt assignStmt, Stack<MemFrame> frame) {
+	public ImcStmt visit(AstAssignStmt assignStmt, Stack<MemFrame> frames) {
 		return null;
 	}
 
 	@Override
-	public ImcStmt visit(AstExprStmt exprStmt, Stack<MemFrame> frame) {
+	public ImcStmt visit(AstExprStmt exprStmt, Stack<MemFrame> frames) {
 		return null;
 	}
 
 	@Override
-	public ImcStmt visit(AstIfStmt ifStmt, Stack<MemFrame> frame) {
+	public ImcStmt visit(AstIfStmt ifStmt, Stack<MemFrame> frames) {
 		return null;
 	}
 
 	@Override
-	public ImcStmt visit(AstWhileStmt whileStmt, Stack<MemFrame> frame) {
+	public ImcStmt visit(AstWhileStmt whileStmt, Stack<MemFrame> frames) {
 		return null;
 	}
 }
