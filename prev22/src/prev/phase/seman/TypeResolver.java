@@ -138,12 +138,11 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 
 		// Second pass
 		if (funDecl.expr != null) {
-			SemType exprType = funDecl.expr.accept(this, mode);
-			SemType funType = SemAn.isType.get(funDecl.type);
+			SemType exprType = funDecl.expr.accept(this, mode).actualType();
+			SemType funType = SemAn.isType.get(funDecl.type).actualType();
 
 			if (exprType != null && !funType.getClass().equals(exprType.getClass())) {
-				throw new Report.Error(funDecl, TAG + "mismatch between function expression and " +
-					"return types");
+				throw new Report.Error(funDecl, TAG + "mismatch between function expression and return types");
 			}
 		}
 
@@ -310,8 +309,8 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 			arg.accept(this, mode);
 			parDecl.accept(this, mode);
 
-			SemType argType = SemAn.ofType.get(arg);
-			SemType parType = SemAn.isType.get(funDecl.pars.get(i).type);
+			SemType argType = SemAn.ofType.get(arg).actualType();
+			SemType parType = SemAn.isType.get(funDecl.pars.get(i).type).actualType();
 
 			if (!argType.getClass().equals(parType.getClass())) {
 				throw new Report.Error(arg, TAG + "mismatch between declared and called argument type");
@@ -332,11 +331,11 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		SemType castType = SemAn.isType.get(castExpr.type);
 		SemType actualCastType = castType.actualType();
 
-		if (!((exprType instanceof SemChar || exprType instanceof SemInt || (exprType instanceof SemPtr &&
-			(((SemPtr) exprType).baseType instanceof SemChar || ((SemPtr) exprType).baseType instanceof SemInt))) &&
-			(actualCastType instanceof SemChar || actualCastType instanceof SemInt || (actualCastType instanceof
-				SemPtr && (((SemPtr) actualCastType).baseType instanceof SemChar || ((SemPtr) actualCastType).baseType
-				instanceof SemInt))))) {
+		Report.info(castExpr.expr, TAG + "expr type: " + exprType);
+		Report.info(castExpr.type, TAG + "cast type: " + actualCastType);
+
+		if (!((exprType instanceof SemChar || exprType instanceof SemInt || exprType instanceof SemPtr) &&
+			(actualCastType instanceof SemChar || actualCastType instanceof SemInt || actualCastType instanceof SemPtr))) {
 			throw new Report.Error(castExpr, TAG + "invalid typecast expression");
 		}
 
@@ -369,37 +368,35 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 
 	@Override
 	public SemType visit(AstPfxExpr pfxExpr, Mode mode) {
-		pfxExpr.expr.accept(this, mode);
-		SemType exprType = SemAn.ofType.get(pfxExpr.expr).actualType();
+		SemType exprType = pfxExpr.expr.accept(this, mode);
+		SemType actualExprType = exprType.actualType();
 
 		SemType type = null;
 		switch (pfxExpr.oper) {
 			case NOT -> {
-				if (!(exprType instanceof SemBool)) {
-					throw new Report.Error(pfxExpr, TAG + "cannot use negation with non-boolean " +
-						"expression");
+				if (!(actualExprType instanceof SemBool)) {
+					throw new Report.Error(pfxExpr, TAG + "cannot use negation with non-boolean expression");
 				}
 
 				type = new SemBool();
 			}
 			case ADD, SUB -> {
-				if (!(exprType instanceof SemInt)) {
-					throw new Report.Error(pfxExpr, TAG + "cannot add or subtract from non-integer " +
-						"expression");
+				if (!(actualExprType instanceof SemInt)) {
+					throw new Report.Error(pfxExpr, TAG + "cannot add or subtract from non-integer expression");
 				}
 
 				type = new SemInt();
 			}
 			case PTR -> type = new SemPtr(exprType);
 			case NEW -> {
-				if (!(exprType instanceof SemInt)) {
+				if (!(actualExprType instanceof SemInt)) {
 					throw new Report.Error(pfxExpr, TAG + "cannot use 'new' with non-integer expression");
 				}
 
 				type = new SemPtr(new SemVoid());
 			}
 			case DEL -> {
-				if (!(exprType instanceof SemPtr)) {
+				if (!(actualExprType instanceof SemPtr)) {
 					throw new Report.Error(pfxExpr, TAG + "cannot use 'del' with non-pointer expression");
 				}
 
@@ -445,9 +442,9 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 	@Override
 	public SemType visit(AstSfxExpr sfxExpr, Mode mode) {
 		sfxExpr.expr.accept(this, mode);
-		SemType exprType = SemAn.ofType.get(sfxExpr.expr);
+		SemType exprType = SemAn.ofType.get(sfxExpr.expr).actualType();
 
-		if (!(exprType.actualType() instanceof SemPtr)) {
+		if (!(exprType instanceof SemPtr)) {
 			throw new Report.Error(sfxExpr, TAG + sfxExpr.expr + " is not a pointer");
 		}
 
@@ -488,16 +485,10 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		SemType dstType = SemAn.ofType.get(assignStmt.dst).actualType();
 		SemType srcType = SemAn.ofType.get(assignStmt.src).actualType();
 
-		if (!(
-			(dstType instanceof SemBool && srcType instanceof SemBool) ||
-				(dstType instanceof SemChar && srcType instanceof SemChar) ||
-				(dstType instanceof SemInt && srcType instanceof SemInt) || (
-				(dstType instanceof SemPtr && srcType instanceof SemPtr) && (
-					(((SemPtr) dstType).baseType instanceof SemBool && ((SemPtr) srcType).baseType instanceof SemBool) ||
-						(((SemPtr) dstType).baseType instanceof SemChar && ((SemPtr) srcType).baseType instanceof SemChar) ||
-						(((SemPtr) dstType).baseType instanceof SemInt && ((SemPtr) srcType).baseType instanceof SemInt)
-				))
-		)) {
+		if (!((dstType instanceof SemBool && srcType instanceof SemBool) ||
+			(dstType instanceof SemChar && srcType instanceof SemChar) ||
+			(dstType instanceof SemInt && srcType instanceof SemInt) || (
+			(dstType instanceof SemPtr && srcType instanceof SemPtr)))) {
 			throw new Report.Error(assignStmt, TAG + "invalid types in assignment");
 		}
 
