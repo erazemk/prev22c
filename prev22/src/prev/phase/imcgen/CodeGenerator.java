@@ -252,6 +252,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 
 	@Override
 	public ImcStmt visit(AstAssignStmt assignStmt, Stack<MemFrame> frames) {
+		// TODO (ST2)
 		return null;
 	}
 
@@ -268,7 +269,31 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 
 	@Override
 	public ImcStmt visit(AstIfStmt ifStmt, Stack<MemFrame> frames) {
-		return null;
+		// Get the condition and both expressions
+		ImcExpr condExpr = (ImcExpr) ifStmt.cond.accept(this, frames);
+		ImcStmt thenStmt = (ImcStmt) ifStmt.thenStmt.accept(this, frames);
+		ImcStmt elseStmt = (ImcStmt) ifStmt.elseStmt.accept(this, frames);
+
+		// Create labels for then and else statements and a break for the then statement
+		ImcLABEL thenLabel = new ImcLABEL(new MemLabel());
+		ImcLABEL elseLabel = new ImcLABEL(new MemLabel());
+		ImcLABEL breakLabel = new ImcLABEL(new MemLabel());
+
+		// If statements need multiple statements, so we need a vector
+		Vector<ImcStmt> stmts = new Vector<>();
+
+		// Statement order: cond. jump -> then label -> then -> break jump -> else label -> else -> break label
+		stmts.add(new ImcCJUMP(condExpr, thenLabel.label, elseLabel.label));
+		stmts.add(thenLabel);
+		stmts.add(thenStmt);
+		stmts.add(new ImcJUMP(breakLabel.label));
+		stmts.add(elseLabel);
+		stmts.add(elseStmt);
+		stmts.add(breakLabel);
+
+		ImcStmt stmt = new ImcSTMTS(stmts);
+		ImcGen.stmtImc.put(ifStmt, stmt);
+		return stmt;
 	}
 
 	@Override
