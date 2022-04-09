@@ -12,6 +12,7 @@ import prev.data.ast.visitor.*;
 import prev.data.imc.code.expr.*;
 import prev.data.imc.code.stmt.*;
 import prev.data.mem.*;
+import prev.data.typ.*;
 import prev.phase.memory.*;
 import prev.phase.seman.SemAn;
 
@@ -37,7 +38,29 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstArrExpr arrExpr, Stack<MemFrame> frames) {
-		return null;
+		// Get the array
+		ImcExpr arr = (ImcExpr) arrExpr.arr.accept(this, frames);
+
+		if (!(arr instanceof ImcMEM memAccess)) {
+			throw new Report.Error(arrExpr, TAG + "array expression is not a memory access");
+		}
+
+		// Get the address of the first element
+		ImcExpr firstElemAddr = memAccess.addr;
+
+		// Get the element type, so we can calculate any element's address
+		SemType elemType = ((SemArr) SemAn.ofType.get(arrExpr.arr).actualType()).elemType;
+
+		// Get the index
+		ImcExpr index = (ImcExpr) arrExpr.idx.accept(this, frames);
+
+		// indexAccess == firstElemAddr + index * sizeOf(elementType)
+		ImcExpr indexAccess = new ImcBINOP(ImcBINOP.Oper.MUL, index, new ImcCONST(elemType.size()));
+		indexAccess = new ImcBINOP(ImcBINOP.Oper.ADD, firstElemAddr, indexAccess);
+
+		ImcExpr expr = new ImcMEM(indexAccess);
+		ImcGen.exprImc.put(arrExpr, expr);
+		return expr;
 	}
 
 	@Override
