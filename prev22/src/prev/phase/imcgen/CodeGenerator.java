@@ -175,7 +175,35 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstRecExpr recExpr, Stack<MemFrame> frames) {
-		return null;
+		// Get the record
+		ImcExpr rec = (ImcExpr) recExpr.rec.accept(this, frames);
+
+		if (!(rec instanceof ImcMEM memAccess)) {
+			throw new Report.Error(recExpr, TAG + "record expression is not a memory access");
+		}
+
+		// Get the address of the first component
+		ImcExpr firstCompAddr = memAccess.addr;
+
+		// Resolve the component
+		recExpr.comp.accept(this, frames);
+
+		// Get the component declaration
+		AstDecl decl = SemAn.declaredAt.get(recExpr.comp);
+
+		if (!(decl instanceof AstMemDecl memDecl)) {
+			throw new Report.Error(recExpr, TAG + "component is not a memory declaration");
+		}
+
+		// Access the component (record components are all relative, so we can cast without type checking)
+		MemRelAccess comp = (MemRelAccess) Memory.accesses.get(memDecl);
+
+		// Calculate the component address (recAddr + offset)
+		ImcExpr compAddr = new ImcBINOP(ImcBINOP.Oper.ADD, firstCompAddr, new ImcCONST(comp.offset));
+
+		ImcExpr expr = new ImcMEM(compAddr);
+		ImcGen.exprImc.put(recExpr, expr);
+		return expr;
 	}
 
 	@Override
