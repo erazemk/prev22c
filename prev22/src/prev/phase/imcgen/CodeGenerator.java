@@ -298,6 +298,28 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 
 	@Override
 	public ImcStmt visit(AstWhileStmt whileStmt, Stack<MemFrame> frames) {
-		return null;
+		// Get the condition and body
+		ImcExpr condExpr = (ImcExpr) whileStmt.cond.accept(this, frames);
+		ImcStmt bodyStmt = (ImcStmt) whileStmt.bodyStmt.accept(this, frames);
+
+		// Create labels for the condition, loop and break
+		ImcLABEL condLabel = new ImcLABEL(new MemLabel());
+		ImcLABEL loopLabel = new ImcLABEL(new MemLabel());
+		ImcLABEL breakLabel = new ImcLABEL(new MemLabel());
+
+		// While statements also need multiple statements, so we need another vector
+		Vector<ImcStmt> stmts = new Vector<>();
+		ImcCJUMP cJump = new ImcCJUMP(condExpr, condLabel.label, breakLabel.label);
+
+		// Statement order: cond. jump -> loop label -> loop (body) -> cond. jump -> break label
+		stmts.add(cJump);
+		stmts.add(loopLabel);
+		stmts.add(bodyStmt);
+		stmts.add(cJump);
+		stmts.add(breakLabel);
+
+		ImcStmt stmt = new ImcSTMTS(stmts);
+		ImcGen.stmtImc.put(whileStmt, stmt);
+		return stmt;
 	}
 }
