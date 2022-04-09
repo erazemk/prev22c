@@ -1,4 +1,5 @@
 fun a() : char = 'a'
+fun aa() : char = '\''
 fun b() : int = -12345
 fun c() : int = +12345
 fun d() : ^char = "string"
