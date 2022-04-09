@@ -252,8 +252,14 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 
 	@Override
 	public ImcStmt visit(AstAssignStmt assignStmt, Stack<MemFrame> frames) {
-		// TODO (ST2)
-		return null;
+		// Get the source and destination expressions
+		ImcExpr dstExpr = (ImcExpr) assignStmt.dst.accept(this, frames);
+		ImcExpr srcExpr = (ImcExpr) assignStmt.src.accept(this, frames);
+
+		// Move source to destination
+		ImcStmt stmt = new ImcMOVE(dstExpr, srcExpr);
+		ImcGen.stmtImc.put(assignStmt, stmt);
+		return stmt;
 	}
 
 	@Override
