@@ -109,8 +109,45 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstCallExpr callExpr, Stack<MemFrame> frames) {
-		// TODO (EX12)
-		return null;
+		// Get the original declaration
+		AstDecl decl = SemAn.declaredAt.get(callExpr);
+		if (!(decl instanceof AstFunDecl funDecl)) {
+			throw new Report.Error(callExpr, TAG + "not a function declaration");
+		}
+
+		// Get the function's stack frame
+		MemFrame frame = Memory.frames.get(funDecl);
+
+		// Get the caller (parent) function's stack frame
+		MemFrame callerFrame = frames.peek();
+
+		ImcExpr tempSL = new ImcTEMP(callerFrame.FP);
+		for (int i = callerFrame.depth; i >= frame.depth; i--) {
+			tempSL = new ImcMEM(tempSL);
+		}
+
+		// Function calls have multiple arguments, so we need a vector to store them and another one for their offsets
+		Vector<ImcExpr> args = new Vector<>();
+		Vector<Long> argOffsets = new Vector<>();
+
+		// Add static link to the list of arguments (and its offset - 0)
+		args.add(tempSL);
+		argOffsets.add(0L);
+
+		// Add all the other arguments to the list along with their offsets
+		long offset = new SemPtr(new SemVoid()).size(); // Argument offsets start at 8, because of SL
+		for (AstExpr arg : callExpr.args) {
+			args.add((ImcExpr) arg.accept(this, frames));
+			argOffsets.add(offset);
+
+			// Increment the offset
+			SemType argType = SemAn.ofType.get(arg);
+			offset += argType.actualType().size();
+		}
+
+		ImcExpr expr = new ImcCALL(frame.label, argOffsets, args);
+		ImcGen.exprImc.put(callExpr, expr);
+		return expr;
 	}
 
 	@Override
