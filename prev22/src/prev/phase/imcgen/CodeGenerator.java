@@ -237,7 +237,14 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstWhereExpr whereExpr, Stack<MemFrame> frames) {
-		return null;
+		// Get the expression
+		ImcExpr expr = (ImcExpr) whereExpr.expr.accept(this, frames);
+
+		// Resolve the declarations
+		whereExpr.decls.accept(this, frames);
+
+		ImcGen.exprImc.put(whereExpr, expr);
+		return expr;
 	}
 
 	// STATEMENTS
