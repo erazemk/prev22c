@@ -58,22 +58,23 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 		ImcExpr subExpr1 = (ImcExpr) binExpr.fstExpr.accept(this, frame);
 		ImcExpr subExpr2 = (ImcExpr) binExpr.sndExpr.accept(this, frame);
 
-		ImcExpr expr = switch (binExpr.oper) {
-			case OR -> new ImcBINOP(ImcBINOP.Oper.OR, subExpr1, subExpr2);
-			case AND -> new ImcBINOP(ImcBINOP.Oper.AND, subExpr1, subExpr2);
-			case EQU -> new ImcBINOP(ImcBINOP.Oper.EQU, subExpr1, subExpr2);
-			case NEQ -> new ImcBINOP(ImcBINOP.Oper.NEQ, subExpr1, subExpr2);
-			case LTH -> new ImcBINOP(ImcBINOP.Oper.LTH, subExpr1, subExpr2);
-			case GTH -> new ImcBINOP(ImcBINOP.Oper.GTH, subExpr1, subExpr2);
-			case LEQ -> new ImcBINOP(ImcBINOP.Oper.LEQ, subExpr1, subExpr2);
-			case GEQ -> new ImcBINOP(ImcBINOP.Oper.GEQ, subExpr1, subExpr2);
-			case ADD -> new ImcBINOP(ImcBINOP.Oper.ADD, subExpr1, subExpr2);
-			case SUB -> new ImcBINOP(ImcBINOP.Oper.SUB, subExpr1, subExpr2);
-			case MUL -> new ImcBINOP(ImcBINOP.Oper.MUL, subExpr1, subExpr2);
-			case DIV -> new ImcBINOP(ImcBINOP.Oper.DIV, subExpr1, subExpr2);
-			case MOD -> new ImcBINOP(ImcBINOP.Oper.MOD, subExpr1, subExpr2);
+		ImcBINOP.Oper oper = switch (binExpr.oper) {
+			case OR -> ImcBINOP.Oper.OR;
+			case AND -> ImcBINOP.Oper.AND;
+			case EQU -> ImcBINOP.Oper.EQU;
+			case NEQ -> ImcBINOP.Oper.NEQ;
+			case LTH -> ImcBINOP.Oper.LTH;
+			case GTH -> ImcBINOP.Oper.GTH;
+			case LEQ -> ImcBINOP.Oper.LEQ;
+			case GEQ -> ImcBINOP.Oper.GEQ;
+			case ADD -> ImcBINOP.Oper.ADD;
+			case SUB -> ImcBINOP.Oper.SUB;
+			case MUL -> ImcBINOP.Oper.MUL;
+			case DIV -> ImcBINOP.Oper.DIV;
+			case MOD -> ImcBINOP.Oper.MOD;
 		};
 
+		ImcExpr expr = new ImcBINOP(oper, subExpr1, subExpr2);
 		ImcGen.exprImc.put(binExpr, expr);
 		return expr;
 	}
