@@ -269,8 +269,27 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstStmtExpr stmtExpr, Stack<MemFrame> frames) {
-		// TODO (EX13)
-		return null;
+		// Statement expressions need multiple statements so we need a vector
+		Vector<ImcStmt> stmts = new Vector<>();
+
+		// Add all but the last statement to the stmts vector
+		for (int i = 0; i < stmtExpr.stmts.size() - 1; i++) {
+			AstStmt astStmt = stmtExpr.stmts.get(i);
+			stmts.add((ImcStmt) astStmt.accept(this, frames));
+		}
+
+		// Resolve the last statement
+		AstStmt astStmt = stmtExpr.stmts.get(stmtExpr.stmts.size() - 1);
+		ImcStmt lastStmt = (ImcStmt) astStmt.accept(this, frames);
+
+		if (!(lastStmt instanceof ImcESTMT)) {
+			throw new Report.Error(stmtExpr, TAG + "last statement must be an expression");
+		}
+
+		ImcStmt stmt = new ImcSTMTS(stmts);
+		ImcExpr expr = new ImcSEXPR(stmt, ((ImcESTMT) lastStmt).expr);
+		ImcGen.exprImc.put(stmtExpr, expr);
+		return expr;
 	}
 
 	@Override
