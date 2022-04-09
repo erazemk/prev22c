@@ -296,12 +296,16 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 		AstStmt astStmt = stmtExpr.stmts.get(stmtExpr.stmts.size() - 1);
 		ImcStmt lastStmt = (ImcStmt) astStmt.accept(this, frames);
 
-		if (!(lastStmt instanceof ImcESTMT)) {
-			throw new Report.Error(stmtExpr, TAG + "last statement must be an expression");
+		ImcExpr lastStmtExpr;
+		if (lastStmt instanceof ImcESTMT) {
+			lastStmtExpr = ((ImcESTMT) lastStmt).expr;
+		} else {
+			stmts.add(lastStmt);
+			lastStmtExpr = new ImcCONST(42); // Return an undefined value
 		}
 
 		ImcStmt stmt = new ImcSTMTS(stmts);
-		ImcExpr expr = new ImcSEXPR(stmt, ((ImcESTMT) lastStmt).expr);
+		ImcExpr expr = new ImcSEXPR(stmt, lastStmtExpr);
 		ImcGen.exprImc.put(stmtExpr, expr);
 		return expr;
 	}
@@ -340,7 +344,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 		// Create a new expression statement
 		ImcStmt stmt = new ImcESTMT(expr);
 		ImcGen.stmtImc.put(exprStmt, stmt);
-		return null;
+		return stmt;
 	}
 
 	@Override
