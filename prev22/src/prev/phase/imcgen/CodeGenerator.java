@@ -142,7 +142,8 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 			case ADD -> subExpr;
 			case SUB -> new ImcUNOP(ImcUNOP.Oper.NEG, subExpr);
 			case PTR -> ((ImcMEM) subExpr).addr; // Return the address of the subexpression
-			default -> null;
+			case NEW -> null; // TODO
+			case DEL -> new ImcCONST(42); // Random value (undefined)
 		};
 
 		ImcGen.exprImc.put(pfxExpr, expr);
