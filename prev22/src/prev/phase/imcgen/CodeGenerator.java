@@ -73,7 +73,18 @@ public class CodeGenerator extends AstNullVisitor<Object, Stack<MemFrame>> {
 
 	@Override
 	public ImcExpr visit(AstPfxExpr pfxExpr, Stack<MemFrame> frame) {
-		return null;
+		// Get subexpression
+		ImcExpr subExpr = (ImcExpr) pfxExpr.expr.accept(this, frame);
+
+		ImcExpr expr = switch (pfxExpr.oper) {
+			case NOT -> new ImcUNOP(ImcUNOP.Oper.NOT, subExpr);
+			case ADD -> subExpr;
+			case SUB -> new ImcUNOP(ImcUNOP.Oper.NEG, subExpr);
+			default -> null;
+		};
+
+		ImcGen.exprImc.put(pfxExpr, expr);
+		return expr;
 	}
 
 	@Override
