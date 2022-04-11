@@ -411,13 +411,14 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 
 		// While statements also need multiple statements, so we need another vector
 		Vector<ImcStmt> stmts = new Vector<>();
-		ImcCJUMP cJump = new ImcCJUMP(condExpr, condLabel.label, breakLabel.label);
+		ImcCJUMP cJump = new ImcCJUMP(condExpr, loopLabel.label, breakLabel.label);
 
-		// Statement order: cond. jump -> loop label -> loop (body) -> cond. jump -> break label
+		// Statement order: cond. label -> cond. jump -> loop label -> loop (body) -> jump to cond. -> break label
+		stmts.add(condLabel);
 		stmts.add(cJump);
 		stmts.add(loopLabel);
 		stmts.add(bodyStmt);
-		stmts.add(cJump);
+		stmts.add(new ImcJUMP(condLabel.label));
 		stmts.add(breakLabel);
 
 		ImcStmt stmt = new ImcSTMTS(stmts);
