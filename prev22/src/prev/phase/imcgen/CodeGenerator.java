@@ -40,7 +40,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 		// Add the offset and argument
 		ImcExpr subExpr = ImcGen.exprImc.get(pfxExpr.expr);
 		args.add(subExpr);
-		offs.add(8L);
+		offs.add(0L);
 
 		// Offload the work to a runtime function
 		return new ImcCALL(label, offs, args);
