@@ -7,7 +7,6 @@ import prev.data.ast.tree.*;
 import prev.data.ast.tree.decl.*;
 import prev.data.ast.tree.expr.*;
 import prev.data.ast.tree.stmt.*;
-import prev.data.ast.tree.type.*;
 import prev.data.ast.visitor.*;
 import prev.data.imc.code.ImcInstr;
 import prev.data.imc.code.expr.*;
@@ -23,6 +22,29 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 
 	// Identifier for info reports
 	private final String TAG = "[CodeGenerator]: ";
+
+	// Helper function for NEW and DEL keywords
+	public ImcExpr mallocOrFree(AstPfxExpr pfxExpr, boolean malloc) {
+		MemLabel label;
+
+		if (malloc) {
+			label = new MemLabel("new");
+		} else { // Free
+			label = new MemLabel("del");
+		}
+
+		// Parameters needed for ImcCALL
+		Vector<Long> offs = new Vector<>();
+		Vector<ImcExpr> args = new Vector<>();
+
+		// Add the offset and argument
+		ImcExpr subExpr = ImcGen.exprImc.get(pfxExpr.expr);
+		args.add(subExpr);
+		offs.add(8L);
+
+		// Offload the work to a runtime function
+		return new ImcCALL(label, offs, args);
+	}
 
 	@Override
 	public ImcInstr visit(AstTrees<? extends AstTree> trees, Stack<MemFrame> frames) {
@@ -230,8 +252,8 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 			case ADD -> subExpr;
 			case SUB -> new ImcUNOP(ImcUNOP.Oper.NEG, subExpr);
 			case PTR -> ((ImcMEM) subExpr).addr; // Return the address of the subexpression
-			case NEW -> null; // TODO
-			case DEL -> new ImcCONST(42); // Random value (undefined)
+			case NEW -> mallocOrFree(pfxExpr, true);
+			case DEL -> mallocOrFree(pfxExpr, false);
 		};
 
 		ImcGen.exprImc.put(pfxExpr, expr);
