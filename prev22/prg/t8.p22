@@ -1,0 +1,7 @@
+typ t = ^[10]{a : int, b : [5]char, c : int}
+var a : t
+fun f() : void = {
+	a^[2].b[1];
+	a^[2].c;
+	none;
+}
