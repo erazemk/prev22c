@@ -15,13 +15,14 @@ public class StmtCanonizer implements ImcVisitor<Vector<ImcStmt>, Object> {
 	public Vector<ImcStmt> visit(ImcCJUMP cjump, Object obj) {
 		Vector<ImcStmt> stmts = new Vector<>();
 		ImcExpr cond = cjump.cond.accept(new ExprCanonizer(), stmts);
-		return new Vector<>(List.of(new ImcCJUMP(cond, cjump.posLabel, cjump.negLabel)));
+		stmts.add(new ImcCJUMP(cond, cjump.posLabel, cjump.negLabel));
+		return stmts;
 	}
 
 	public Vector<ImcStmt> visit(ImcESTMT eStmt, Object obj) {
 		Vector<ImcStmt> stmts = new Vector<>();
-		ImcExpr expr = eStmt.expr.accept(new ExprCanonizer(), stmts);
-		return new Vector<>(List.of(new ImcESTMT(expr)));
+		stmts.add(new ImcESTMT(eStmt.expr.accept(new ExprCanonizer(), stmts)));
+		return stmts;
 	}
 
 	public Vector<ImcStmt> visit(ImcJUMP jump, Object obj) {
@@ -34,16 +35,19 @@ public class StmtCanonizer implements ImcVisitor<Vector<ImcStmt>, Object> {
 
 	public Vector<ImcStmt> visit(ImcMOVE move, Object obj) {
 		Vector<ImcStmt> stmts = new Vector<>();
-		MemTemp srcTemp = new MemTemp();
+		MemTemp memSrcTemp = new MemTemp();
+		ImcTEMP srcTemp = new ImcTEMP(memSrcTemp);
 
 		if (move.dst instanceof ImcMEM moveDst) { // Writing to memory
-			MemTemp dstTemp = new MemTemp();
-			stmts.add(new ImcMOVE(new ImcTEMP(dstTemp), moveDst.addr.accept(new ExprCanonizer(), stmts)));
-			stmts.add(new ImcMOVE(new ImcTEMP(srcTemp), move.src.accept(new ExprCanonizer(), stmts)));
-			stmts.add(new ImcMOVE(new ImcMEM(new ImcTEMP(dstTemp)), new ImcTEMP(srcTemp)));
+			MemTemp memDstTemp = new MemTemp();
+			ImcTEMP dstTemp = new ImcTEMP(memDstTemp);
+
+			stmts.add(new ImcMOVE(dstTemp, moveDst.addr.accept(new ExprCanonizer(), stmts)));
+			stmts.add(new ImcMOVE(srcTemp, move.src.accept(new ExprCanonizer(), stmts)));
+			stmts.add(new ImcMOVE(new ImcMEM(dstTemp), srcTemp));
 		} else if (move.dst instanceof ImcTEMP moveDst) { // Storing to temporary variable
-			stmts.add(new ImcMOVE(new ImcTEMP(srcTemp), move.src.accept(new ExprCanonizer(), stmts)));
-			stmts.add(new ImcMOVE(new ImcTEMP(moveDst.temp), new ImcTEMP(srcTemp)));
+			stmts.add(new ImcMOVE(srcTemp, move.src.accept(new ExprCanonizer(), stmts)));
+			stmts.add(new ImcMOVE(new ImcTEMP(moveDst.temp), srcTemp));
 		}
 
 		return stmts;
