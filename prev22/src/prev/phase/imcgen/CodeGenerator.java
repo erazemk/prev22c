@@ -37,10 +37,14 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 		Vector<Long> offs = new Vector<>();
 		Vector<ImcExpr> args = new Vector<>();
 
+		// Add SL
+		args.add(new ImcTEMP(new MemTemp()));
+		offs.add(0L);
+
 		// Add the offset and argument
 		ImcExpr subExpr = ImcGen.exprImc.get(pfxExpr.expr);
 		args.add(subExpr);
-		offs.add(0L);
+		offs.add(new SemPtr(new SemVoid()).size());
 
 		// Offload the work to a runtime function
 		return new ImcCALL(label, offs, args);
@@ -66,7 +70,11 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 	@Override
 	public ImcInstr visit(AstFunDecl funDecl, Stack<MemFrame> frames) {
 		frames.push(Memory.frames.get(funDecl));
-		funDecl.expr.accept(this, frames);
+
+		if (funDecl.expr != null) {
+			funDecl.expr.accept(this, frames);
+		}
+
 		frames.pop();
 		return null;
 	}
@@ -104,7 +112,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 	public ImcExpr visit(AstAtomExpr atomExpr, Stack<MemFrame> frames) {
 		// Convert to constant or address based on type
 		ImcExpr expr = switch (atomExpr.type) {
-			case VOID -> new ImcCONST(42); // Null returns random value (undefined)
+			case VOID -> new ImcCONST(0); // Default to 0, so that exit code for void functions is 0
 			case POINTER -> new ImcCONST(0); // Nil returns 0
 			case BOOL -> new ImcCONST((atomExpr.value.equals("true")) ? 1 : 0); // Bool returns 0 or 1
 			case CHAR -> new ImcCONST(atomExpr.value.length() == 3 ? atomExpr.value.charAt(1) : atomExpr.value.charAt(2)); // ASCII value (position changes if escaped single quote)
@@ -323,7 +331,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 			lastStmtExpr = ((ImcESTMT) lastStmt).expr;
 		} else {
 			stmts.add(lastStmt);
-			lastStmtExpr = new ImcCONST(42); // Return an undefined value
+			lastStmtExpr = new ImcCONST(0); // Return an undefined value
 		}
 
 		ImcStmt stmt = new ImcSTMTS(stmts);
