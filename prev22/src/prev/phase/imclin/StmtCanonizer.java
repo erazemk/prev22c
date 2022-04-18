@@ -33,7 +33,20 @@ public class StmtCanonizer implements ImcVisitor<Vector<ImcStmt>, Object> {
 	}
 
 	public Vector<ImcStmt> visit(ImcMOVE move, Object obj) {
-		return null;
+		Vector<ImcStmt> stmts = new Vector<>();
+		MemTemp srcTemp = new MemTemp();
+
+		if (move.dst instanceof ImcMEM moveDst) { // Writing to memory
+			MemTemp dstTemp = new MemTemp();
+			stmts.add(new ImcMOVE(new ImcTEMP(dstTemp), moveDst.addr.accept(new ExprCanonizer(), stmts)));
+			stmts.add(new ImcMOVE(new ImcTEMP(srcTemp), move.src.accept(new ExprCanonizer(), stmts)));
+			stmts.add(new ImcMOVE(new ImcMEM(new ImcTEMP(dstTemp)), new ImcTEMP(srcTemp)));
+		} else if (move.dst instanceof ImcTEMP moveDst) { // Storing to temporary variable
+			stmts.add(new ImcMOVE(new ImcTEMP(srcTemp), move.src.accept(new ExprCanonizer(), stmts)));
+			stmts.add(new ImcMOVE(new ImcTEMP(moveDst.temp), new ImcTEMP(srcTemp)));
+		}
+
+		return stmts;
 	}
 
 	public Vector<ImcStmt> visit(ImcSTMTS stmts, Object obj) {
