@@ -217,6 +217,7 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		}
 
 		SemType type = ((SemArr) arrType).elemType;
+		SemAn.isAddr.put(arrExpr, true);
 		SemAn.ofType.put(arrExpr, type);
 		return type;
 	}
@@ -331,8 +332,8 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		SemType castType = SemAn.isType.get(castExpr.type);
 		SemType actualCastType = castType.actualType();
 
-		Report.info(castExpr.expr, TAG + "expr type: " + exprType);
-		Report.info(castExpr.type, TAG + "cast type: " + actualCastType);
+		Report.info(castExpr.expr, TAG + "expr type: " + exprType.getClass().getSimpleName());
+		Report.info(castExpr.type, TAG + "cast type: " + actualCastType.getClass().getSimpleName());
 
 		if (!((exprType instanceof SemChar || exprType instanceof SemInt || exprType instanceof SemPtr) &&
 			(actualCastType instanceof SemChar || actualCastType instanceof SemInt || actualCastType instanceof SemPtr))) {
@@ -362,6 +363,7 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 			throw new Report.Error(nameExpr, TAG + "you can only declare variables or parameters");
 		}
 
+		SemAn.isAddr.put(nameExpr, true);
 		SemAn.ofType.put(nameExpr, type);
 		return type;
 	}
@@ -434,6 +436,7 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		}
 
 		SemType compType = SemAn.isType.get(compDecl.type);
+		SemAn.isAddr.put(recExpr, true);
 		SemAn.ofType.put(recExpr, compType);
 		SemAn.declaredAt.put(recExpr.comp, compDecl);
 		return compType;
@@ -443,12 +446,14 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 	public SemType visit(AstSfxExpr sfxExpr, Mode mode) {
 		sfxExpr.expr.accept(this, mode);
 		SemType exprType = SemAn.ofType.get(sfxExpr.expr).actualType();
+		Report.info(sfxExpr, TAG + "sfxExpr: " + sfxExpr.expr.getClass().getSimpleName());
 
 		if (!(exprType instanceof SemPtr)) {
 			throw new Report.Error(sfxExpr, TAG + sfxExpr.expr + " is not a pointer");
 		}
 
 		SemType type = ((SemPtr) exprType).baseType;
+		SemAn.isAddr.put(sfxExpr, true);
 		SemAn.ofType.put(sfxExpr, type);
 		return type;
 	}
@@ -479,11 +484,11 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 
 	@Override
 	public SemType visit(AstAssignStmt assignStmt, Mode mode) {
-		assignStmt.src.accept(this, mode);
-		assignStmt.dst.accept(this, mode);
+		SemType srcType = assignStmt.src.accept(this, mode).actualType();
+		SemType dstType = assignStmt.dst.accept(this, mode).actualType();
 
-		SemType dstType = SemAn.ofType.get(assignStmt.dst).actualType();
-		SemType srcType = SemAn.ofType.get(assignStmt.src).actualType();
+		//SemType dstType = SemAn.ofType.get(assignStmt.dst).actualType();
+		//SemType srcType = SemAn.ofType.get(assignStmt.src).actualType();
 
 		if (!((dstType instanceof SemBool && srcType instanceof SemBool) ||
 			(dstType instanceof SemChar && srcType instanceof SemChar) ||
