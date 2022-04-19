@@ -60,6 +60,8 @@ public class TypeResolver extends AstFullVisitor<SemType, TypeResolver.Mode> {
 		} else if (type instanceof AstArrType arrType) {
 			detectRecursiveType(arrType.elemType, set);
 		}
+
+		set.remove(type.id());
 	}
 
 	@Override
