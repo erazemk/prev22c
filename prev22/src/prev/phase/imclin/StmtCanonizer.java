@@ -2,6 +2,7 @@ package prev.phase.imclin;
 
 import java.util.*;
 
+import prev.common.report.Report;
 import prev.data.mem.*;
 import prev.data.imc.code.expr.*;
 import prev.data.imc.code.stmt.*;
@@ -11,6 +12,9 @@ import prev.data.imc.visitor.*;
  * Statement canonizer.
  */
 public class StmtCanonizer implements ImcVisitor<Vector<ImcStmt>, Object> {
+
+	// Identifier for info reports
+	private final String TAG = "[StmtCanonizer]: ";
 
 	public Vector<ImcStmt> visit(ImcCJUMP cjump, Object obj) {
 		Vector<ImcStmt> stmts = new Vector<>();
@@ -42,10 +46,14 @@ public class StmtCanonizer implements ImcVisitor<Vector<ImcStmt>, Object> {
 			MemTemp memDstTemp = new MemTemp();
 			ImcTEMP dstTemp = new ImcTEMP(memDstTemp);
 
+			Report.info(TAG + "(move - mem): " + memSrcTemp + "=" + move.src + ", " + memDstTemp + "=" + moveDst.addr);
+
 			stmts.add(new ImcMOVE(dstTemp, moveDst.addr.accept(new ExprCanonizer(), stmts)));
 			stmts.add(new ImcMOVE(srcTemp, move.src.accept(new ExprCanonizer(), stmts)));
 			stmts.add(new ImcMOVE(new ImcMEM(dstTemp), srcTemp));
 		} else if (move.dst instanceof ImcTEMP moveDst) { // Storing to temporary variable
+			Report.info(TAG + "(move - temp): " + memSrcTemp + "=" + move.src);
+
 			stmts.add(new ImcMOVE(srcTemp, move.src.accept(new ExprCanonizer(), stmts)));
 			stmts.add(new ImcMOVE(new ImcTEMP(moveDst.temp), srcTemp));
 		}
