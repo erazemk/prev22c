@@ -154,8 +154,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 	@Override
 	public ImcExpr visit(AstCallExpr callExpr, Stack<MemFrame> frames) {
 		// Get the original declaration
-		AstDecl decl = SemAn.declaredAt.get(callExpr);
-		if (!(decl instanceof AstFunDecl funDecl)) {
+		if (!(SemAn.declaredAt.get(callExpr) instanceof AstFunDecl funDecl)) {
 			throw new Report.Error(callExpr, TAG + "not a function declaration");
 		}
 
@@ -165,9 +164,12 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 		// Get the caller (parent) function's stack frame
 		MemFrame callerFrame = frames.peek();
 
-		ImcExpr tempSL = new ImcTEMP(callerFrame.FP);
-		for (int i = callerFrame.depth; i >= frame.depth; i--) {
-			tempSL = new ImcMEM(tempSL);
+		ImcExpr tempSL = new ImcCONST(0);
+		if (frame.depth > 0) {
+			tempSL = new ImcTEMP(callerFrame.FP);
+			for (int i = 0; i <= callerFrame.depth - frame.depth; i++) {
+				tempSL = new ImcMEM(tempSL);
+			}
 		}
 
 		// Function calls have multiple arguments, so we need a vector to store them and another one for their offsets
@@ -237,7 +239,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 			int deltaDepth = (frames.size() - 1) - relAccess.depth;
 			ImcExpr tempFP = new ImcTEMP(frames.peek().FP);
 
-			for (int i = 0; i < deltaDepth; i++) {
+			for (int i = 0; i <= deltaDepth; i++) {
 				tempFP = new ImcMEM(tempFP);
 			}
 
