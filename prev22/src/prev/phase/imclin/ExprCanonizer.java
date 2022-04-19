@@ -28,7 +28,7 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
 		stmts.add(new ImcMOVE(temp1, binOp.fstExpr.accept(this, stmts)));
 		stmts.add(new ImcMOVE(temp2, binOp.sndExpr.accept(this, stmts)));
 
-		Report.info(TAG + "(binOp): " + binOp.fstExpr + "=" + memTemp1 + ", " + binOp.sndExpr + "=" + memTemp2);
+		Report.info(TAG + "(binOp): " + memTemp1 + "=" + binOp.fstExpr + ", " + memTemp2 + "=" + binOp.sndExpr);
 
 		return new ImcBINOP(binOp.oper, temp1, temp2);
 	}
@@ -38,6 +38,7 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
 
 		for (ImcExpr arg : call.args) {
 			MemTemp memTemp = new MemTemp();
+			Report.info(TAG + "(call): " + memTemp + "=" + arg);
 			ImcTEMP temp = new ImcTEMP(memTemp);
 			stmts.add(new ImcMOVE(temp, arg.accept(this, stmts)));
 			args.add(temp);
@@ -55,7 +56,7 @@ public class ExprCanonizer implements ImcVisitor<ImcExpr, Vector<ImcStmt>> {
 		ImcTEMP temp = new ImcTEMP(memTemp);
 		stmts.add(new ImcMOVE(temp, new ImcMEM(mem.addr.accept(this, stmts))));
 
-		Report.info(TAG + "(mem): " + mem.addr + "=" + memTemp);
+		Report.info(TAG + "(mem): " + memTemp + "=" + mem.addr);
 
 		return temp;
 	}
