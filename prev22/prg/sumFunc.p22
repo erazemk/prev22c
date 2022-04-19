@@ -1,0 +1,20 @@
+fun main() : int = {
+	sum = fun1();
+	sum;
+} where {
+	var sum : int
+}
+
+fun fun1() : int = {
+	sum = 0;
+	sum = sum + fun2();
+	sum;
+} where {
+	var sum : int
+
+	fun fun2() : int = {
+		1 + 2 * i;
+	} where {
+		var i : int
+	}
+}

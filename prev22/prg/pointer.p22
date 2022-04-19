@@ -1,2 +1,0 @@
-fun f(x : ^int) : int = x^
-fun g(x : int) : ^int = ^x

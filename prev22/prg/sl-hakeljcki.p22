@@ -1,0 +1,59 @@
+
+fun main() : int = {
+	sum = noArgs();
+	sum = sum + withArgs();
+
+	# Pricakuje se 100
+	sum;
+} where {
+	var sum : int
+}
+
+fun noArgs() : int = {
+	sum = 0;
+	nested1();
+	sum;
+} where {
+	var sum : int
+
+	fun nested1() : void = {
+		nested2();
+	} where {
+		fun nested2() : void = {
+			if sum < 50 then {
+				nested3();
+			} else none;
+		} where {
+			fun nested3() : void = {
+				sum = sum + 1;
+				if sum % 3 > 1 then {
+					nested1();
+				} else {
+					nested2();
+				};
+			}
+		}
+	}
+}
+
+
+fun withArgs() : int = {
+	nested1(100);
+	w;
+} where {
+	var w : int
+
+    fun nested1(a : int) : void = {
+		nested2(a-1);
+	} where {
+        fun nested2(b : int) : void = {
+			if b > 1 then {
+				nested1(b-1);
+			} else {
+				w = someOtherThingy(w);
+			};
+		}
+    }
+
+	fun someOtherThingy(param : int) : int = 2 * 7 + 6 * 6 # 50
+}

@@ -1,0 +1,11 @@
+fun main() : int = {
+	fun1(5);
+}
+
+fun fun1(i : int) : int = {
+	fun2(2 * i);
+}
+
+fun fun2(i : int) : int = {
+	3 * i;
+}

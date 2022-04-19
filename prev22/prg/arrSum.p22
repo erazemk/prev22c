@@ -1,0 +1,20 @@
+fun main() : int = {
+	i = 0;
+	j = 0;
+	k = 0;
+
+	while { i = i + 1; i < 5; } do {
+		arr[i] = i;
+	};
+
+	while { j = j + 1; j < 5; } do {
+		k = k + arr[j];
+	};
+
+	k;
+} where {
+	var i : int
+	var j : int
+	var k : int
+	var arr : [5]int
+}

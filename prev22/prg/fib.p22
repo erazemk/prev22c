@@ -1,0 +1,25 @@
+fun main() : int = fib(8)
+where {
+	fun fib(x : int) : int = {
+		if x < 2 then ret = x
+		else ret = fibfib(0,1);
+		ret;
+	} where {
+		var ret : int
+		fun fibfib(a : int, b : int) : int = {
+			x = x - 1;
+			c = a + b;
+			if x < 2
+			then ret = c
+			else ret = fibfib(b,c);
+			ret;
+		} where {
+			var c : int
+			var ret : int
+		}
+	}
+}
+fun putInt(x : int) : void = {
+	putChar(((x + ('0': int)) : char));
+}
+fun putChar(c : char) : void

@@ -1,0 +1,13 @@
+fun main() : int = {
+	rec(5);
+}
+
+fun rec(i : int) : int = {
+	if i >= 1
+	then ret = i + rec(i - 1)
+	else ret = i;
+
+	ret;
+} where {
+	var ret : int
+}

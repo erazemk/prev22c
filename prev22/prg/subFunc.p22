@@ -1,0 +1,11 @@
+fun main() : int = {
+	sum = 2;
+	add();
+	sum;
+} where {
+	var sum : int
+
+	fun add() : void = {
+		sum = 1;
+	}
+}

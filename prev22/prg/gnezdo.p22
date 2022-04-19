@@ -1,0 +1,7 @@
+fun main() : void = g()
+
+fun g() : void = h(true) where {
+	fun h(x : bool) : void = {if x then i() else none;} where {
+		fun i() : void = h(false)
+	}
+}
