@@ -38,7 +38,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 		Vector<ImcExpr> args = new Vector<>();
 
 		// Add SL
-		args.add(new ImcTEMP(new MemTemp()));
+		args.add(new ImcCONST(0));
 		offs.add(0L);
 
 		// Add the offset and argument
@@ -104,6 +104,9 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 		indexAccess = new ImcBINOP(ImcBINOP.Oper.ADD, firstElemAddr, indexAccess);
 
 		ImcExpr expr = new ImcMEM(indexAccess);
+
+		Report.info(TAG + "(ArrExpr): " + expr + "=" + indexAccess);
+
 		ImcGen.exprImc.put(arrExpr, expr);
 		return expr;
 	}
@@ -167,6 +170,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 		ImcExpr tempSL = new ImcCONST(0);
 		if (frame.depth > 0) {
 			tempSL = new ImcTEMP(callerFrame.FP);
+			Report.info(TAG + "(CallExpr): " + tempSL);
 			for (int i = 0; i <= callerFrame.depth - frame.depth; i++) {
 				tempSL = new ImcMEM(tempSL);
 			}
@@ -238,6 +242,7 @@ public class CodeGenerator extends AstNullVisitor<ImcInstr, Stack<MemFrame>> {
 				and then get the variable at the offset of the last level */
 			int deltaDepth = (frames.size() - 1) - relAccess.depth;
 			ImcExpr tempFP = new ImcTEMP(frames.peek().FP);
+			Report.info(TAG + "(NameExpr): " + tempFP);
 
 			for (int i = 0; i <= deltaDepth; i++) {
 				tempFP = new ImcMEM(tempFP);
