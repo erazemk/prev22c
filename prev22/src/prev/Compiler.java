@@ -12,6 +12,7 @@ import prev.phase.seman.*;
 import prev.phase.memory.*;
 import prev.phase.imcgen.*;
 import prev.phase.imclin.*;
+import prev.phase.asmgen.*;
 
 /**
  * The compiler.
@@ -21,7 +22,7 @@ public class Compiler {
 	// COMMAND LINE ARGUMENTS
 
 	/** All valid phases of the compiler. */
-	private static final String phases = "none|lexan|synan|abstr|seman|memory|imcgen|imclin";
+	private static final String phases = "none|lexan|synan|abstr|seman|memory|imcgen|imclin|asmgen";
 
 	/** A flag for enabling the printing of Report.info messages */
 	public static boolean debug = false;
@@ -187,6 +188,14 @@ public class Compiler {
 					System.out.println("EXIT CODE: " + interpreter.run("_main"));
 				}
 				if (Compiler.cmdLineArgValue("--target-phase").equals("imclin"))
+					break;
+
+				// Machine code generation.
+				try (AsmGen asmgen = new AsmGen()) {
+					asmgen.genAsmCodes();
+					asmgen.log();
+				}
+				if (Compiler.cmdLineArgValue("--target-phase").equals("asmgen"))
 					break;
 
 			}
