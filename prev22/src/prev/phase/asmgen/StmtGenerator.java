@@ -13,4 +13,27 @@ import prev.common.report.*;
  */
 public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 
+	public Vector<AsmInstr> visit(ImcCJUMP cjump, Object obj) {
+		return null;
+	}
+
+	public Vector<AsmInstr> visit(ImcESTMT eStmt, Object obj) {
+		return null;
+	}
+
+	public Vector<AsmInstr> visit(ImcJUMP jump, Object obj) {
+		return null;
+	}
+
+	public Vector<AsmInstr> visit(ImcLABEL label, Object obj) {
+		return null;
+	}
+
+	public Vector<AsmInstr> visit(ImcMOVE move, Object obj) {
+		return null;
+	}
+
+	public Vector<AsmInstr> visit(ImcSTMTS stmts, Object obj) {
+		return null;
+	}
 }
