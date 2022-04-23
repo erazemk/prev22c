@@ -1,0 +1,144 @@
+var N : int
+
+fun main() : void = {
+	N = 8;
+	queens(^positions, 0);
+	printBoard(^positions);
+	none;
+} where {
+	var positions : [8]int
+}
+
+fun queens(positions : ^[8]int, currentQueen : int) : bool = {
+	if currentQueen == N then true
+	else {
+		i = 0;
+		finished = false;
+
+		# Try to place queen on all rows
+		while i < N  & !finished do {
+			valid = true;
+			j = 0;
+
+			# Check if previous queens do not attack the new one
+			while j < currentQueen & valid do {
+				valid = !queensAttack(j, positions^[j], currentQueen, i);
+				j = j + 1;
+			};
+
+			# If queens do not attack themselves, place queens and continue
+			if valid then {
+				# Place next queen
+				positions^[currentQueen] = i;
+				finished = queens(positions, currentQueen + 1);
+			} else none;
+
+			# Try next row
+			i = i + 1;
+		};
+	};
+	finished;
+}
+where {
+	var finished : bool
+	var valid : bool
+	var i : int
+	var j : int
+}
+
+fun queensAttack(x1 : int, y1 : int, x2 : int, y2 : int) : bool =
+	abs(x1 - x2) == 0 | abs(y1 - y2) == 0 | abs(x1 - x2) == abs(y1 - y2)
+
+fun abs(x : int) : int = {
+	if x < 0 then
+		x = -x
+	else
+		none;
+	x;
+}
+
+# functions for printing
+
+fun printBoard(board : ^[8]int) : void = {
+	i = 0;
+	str = (new 18 : ^char);
+	printLn("-----------------");
+	setChar(str, 17, (0 : char));
+	while i < 8 do {
+		j = 0;
+		setChar(str, 0, '|');
+		while j < 8 do {
+			if board^[j] == i then
+				setChar(str, j*2+1, 'X')
+			else
+				setChar(str, j*2+1, ' ');
+			setChar(str, j*2+2, '|');
+			j = j+1;
+		};
+		printLn(str);
+		printLn("-----------------");
+		i = i+1;
+	};
+	del str;
+} where {
+	var str : ^char
+	var i : int
+	var j : int
+}
+
+fun putChar(c : char) : void
+
+fun strIndex(s : ^char, i : int) : char = ((s:int)+8*i : ^char)^
+fun setChar(s : ^char, i : int, c : char) : void = {
+	((s:int)+8*i : ^char)^ = c;
+}
+
+fun print(s : ^char) : void = {
+	i = 0;
+	while {c = strIndex(s, i); i = i+1; c != (0 : char);} do {
+		putChar(c);
+	};
+} where {
+	var i : int
+	var c : char
+}
+
+fun printLn(s : ^char) : void = {
+	print(s);
+	putChar((10 : char));
+}
+
+fun intToStr(i : int) : ^char = {
+	n = log10(i);
+	string = (new (n+1) : ^char);
+	sEnd = itStr(i, string);
+	sEnd^ = (0 : char);
+	string;
+} where {
+	var string : ^char
+	var sEnd : ^char
+	var n : int
+}
+
+fun log10(i : int) : int = {
+	if i < 10 then
+		i = 0
+	else
+		i = log10(i/10) + 1;
+	i;
+}
+
+fun itStr(i : int, s : ^char) : ^char = {
+	digit = i % 10;
+	if i >= 10 then {
+		s = itStr(i/10, s);
+	} else none;
+	s^ = intToChar(digit);
+	((s : int)+8 : ^char);
+} where {
+	var digit : int
+}
+
+fun intToChar(i : int) : char = (i+('0' : int) : char)
+
+fun printInt(i : int) : void = printLn(intToStr(i))
