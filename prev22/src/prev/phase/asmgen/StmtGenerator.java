@@ -72,7 +72,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 				uses = new Vector<>(List.of(temp, dst));
 
 				// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Store
-				instructions.add(new AsmMOVE("STO `s0, `s1, 0", uses, null));
+				instructions.add(new AsmOPER("STO `s0, `s1, 0", uses, null, null));
 			} else {
 				// With REG -> MEM just store register value into memory
 				src = move.src.accept(new ExprGenerator(), instructions);
@@ -81,7 +81,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 				uses = new Vector<>(List.of(src, dst));
 
 				// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Store
-				instructions.add(new AsmMOVE("STO `s0, `s1, 0", uses, null));
+				instructions.add(new AsmOPER("STO `s0, `s1, 0", uses, null, null));
 			}
 		} else { // X -> REG
 			if (move.src instanceof ImcMEM) {
