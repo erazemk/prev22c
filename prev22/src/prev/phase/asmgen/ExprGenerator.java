@@ -184,6 +184,8 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 		instructions.add(switch (unOp.oper) {
 			// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Arithmetic
 			case NEG -> new AsmOPER("NEG `d0, `s0", uses, defs, null);
+
+			// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Bit_Operations
 			case NOT -> new AsmOPER("NAND `d0, `s0, 1", uses, defs, null);
 		});
 
