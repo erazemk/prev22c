@@ -100,7 +100,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
 		// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Load
 		// Get the return value
-		instructions.add(new AsmMOVE("LDO `d0, $254, 0", null, defs));
+		instructions.add(new AsmOPER("LDO `d0, $254, 0", null, defs, null));
 
 		return dst;
 	}
