@@ -120,15 +120,15 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 		if (val > 0) {
 			instructions.add(new AsmOPER("INCML `d0, " + (short) (val & 0xFFFF), null, defs, null));
 			val >>= 16;
+		}
 
-			if (val > 0) {
-				instructions.add(new AsmOPER("INCMH `d0, " + (short) (val & 0xFFFF), null, defs, null));
-				val >>= 16;
+		if (val > 0) {
+			instructions.add(new AsmOPER("INCMH `d0, " + (short) (val & 0xFFFF), null, defs, null));
+			val >>= 16;
+		}
 
-				if (val > 0) {
-					instructions.add(new AsmOPER("INCH `d0, " + (short) (val & 0xFFFF), null, defs, null));
-				}
-			}
+		if (val > 0) {
+			instructions.add(new AsmOPER("INCH `d0, " + (short) (val & 0xFFFF), null, defs, null));
 		}
 
 		// Negate the value if needed
