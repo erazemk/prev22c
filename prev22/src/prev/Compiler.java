@@ -184,8 +184,8 @@ public class Compiler {
 					Abstr.tree.accept(new ChunkGenerator(), null);
 					imclin.log();
 
-					Interpreter interpreter = new Interpreter(ImcLin.dataChunks(), ImcLin.codeChunks());
-					System.out.println("EXIT CODE: " + interpreter.run("_main"));
+					/*Interpreter interpreter = new Interpreter(ImcLin.dataChunks(), ImcLin.codeChunks());
+					System.out.println("EXIT CODE: " + interpreter.run("_main"));*/
 				}
 				if (Compiler.cmdLineArgValue("--target-phase").equals("imclin"))
 					break;
