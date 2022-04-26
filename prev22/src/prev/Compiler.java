@@ -50,7 +50,7 @@ public class Compiler {
 	 */
 	public static void main(String[] args) {
 		try {
-			Report.info("This is PREV'22 compiler:");
+			System.out.println(":-) This is PREV'22 compiler:");
 
 			// Scan the command line.
 			for (int argc = 0; argc < args.length; argc++) {
@@ -200,7 +200,7 @@ public class Compiler {
 
 			}
 
-			Report.info("Done.");
+			System.out.println(":-) Done.");
 		} catch (Report.Error __) {
 			System.exit(1);
 		}
