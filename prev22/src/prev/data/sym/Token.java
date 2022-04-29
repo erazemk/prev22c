@@ -13,9 +13,7 @@ import prev.phase.lexan.*;
 @SuppressWarnings("serial")
 public class Token extends CommonToken implements Locatable, Loggable {
 
-	/**
-	 * The location of this token.
-	 */
+	/** The location of this token. */
 	private final Location location;
 
 	public Token(int type, String text) {
@@ -23,14 +21,14 @@ public class Token extends CommonToken implements Locatable, Loggable {
 		setLine(0);
 		setCharPositionInLine(0);
 		location = new Location(getLine(), getCharPositionInLine(), getLine(),
-			getCharPositionInLine() + getText().length() - 1);
+				getCharPositionInLine() + getText().length() - 1);
 	}
 
 	public Token(Pair<TokenSource, CharStream> source, int type, int channel, int start, int stop) {
 		super(source, type, channel, start, stop);
 		setCharPositionInLine(getCharPositionInLine() - getText().length() + 1);
 		location = new Location(getLine(), getCharPositionInLine(), getLine(),
-			getCharPositionInLine() + getText().length() - 1);
+				getCharPositionInLine() + getText().length() - 1);
 	}
 
 	@Override
