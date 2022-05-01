@@ -14,7 +14,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 
 	public Vector<AsmInstr> visit(ImcCJUMP cjump, Object obj) {
 		Vector<AsmInstr> instructions = new Vector<>();
-		Vector<MemLabel> jumps = new Vector<>(List.of(cjump.negLabel));
+		Vector<MemLabel> jumps = new Vector<>(List.of(cjump.negLabel, cjump.posLabel));
 
 		MemTemp cond = cjump.cond.accept(new ExprGenerator(), instructions);
 		Vector<MemTemp> uses = new Vector<>(List.of(cond));
