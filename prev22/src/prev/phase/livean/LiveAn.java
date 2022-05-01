@@ -1,9 +1,13 @@
 package prev.phase.livean;
 
+import prev.common.report.Report;
 import prev.data.mem.*;
 import prev.data.asm.*;
 import prev.phase.*;
 import prev.phase.asmgen.*;
+
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Liveness analysis.
@@ -15,9 +19,49 @@ public class LiveAn extends Phase {
 	}
 
 	public void compLifetimes() {
-		// TODO
+		boolean changed;
+		HashMap<String, AsmLABEL> labelMap = new HashMap<>();
+
+		for (Code code : AsmGen.codes) {
+			do {
+				changed = false;
+				for (int i = 0; i < code.instrs.size(); i++) {
+					AsmInstr instr = code.instrs.get(i);
+					int inSize = instr.in().size();
+					int outSize = instr.out().size();
+
+					if (instr instanceof AsmLABEL asmLabel) {
+						labelMap.put(asmLabel.toString(), asmLabel);
+					}
+
+					// If instruction is a jump, then next instruction will be
+					// the location it jumps to (or neg/pos)
+					// If instruction is a function call, then the label will be
+					// outside this code block, so continue normally
+					if (instr.jumps().size() > 0 && !instr.toString().startsWith("PUSHJ")) {
+						for (MemLabel label : instr.jumps()) {
+							if (labelMap.get(label.name) != null) {
+								instr.addOutTemp(labelMap.get(label.name).in());
+							}
+						}
+					} else if (i < code.instrs.size() - 1) {
+						instr.addOutTemp(code.instrs.get(i + 1).in());
+					}
+
+					instr.addInTemps(new HashSet<>(instr.uses()));
+					HashSet<MemTemp> filtered = new HashSet<>(instr.out());
+					instr.defs().forEach(filtered::remove);
+					instr.addInTemps(filtered);
+
+					// Check if there were any changes
+					if (inSize != instr.in().size() || outSize != instr.out().size()) {
+						changed = true;
+					}
+				}
+			} while (changed);
+		}
 	}
-	
+
 	public void log() {
 		if (logger == null)
 			return;
