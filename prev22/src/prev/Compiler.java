@@ -24,13 +24,13 @@ public class Compiler {
 	// COMMAND LINE ARGUMENTS
 
 	/** All valid phases of the compiler. */
-	private static final String phases = "none|lexan|synan|abstr|seman|memory|imcgen|imclin|asmgen|livean";
+	private static final String phases = "none|lexan|synan|abstr|seman|memory|imcgen|imclin|asmgen|livean|regall";
 
 	/** A flag for enabling the printing of Report.info messages */
 	public static boolean debug = false;
 
 	/** Values of command line arguments. */
-	private static final HashMap<String, String> cmdLine = new HashMap<String, String>();
+	private static final HashMap<String, String> cmdLine = new HashMap<>();
 
 	/**
 	 * Returns the value of a command line argument.
