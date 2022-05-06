@@ -1,6 +1,7 @@
 package prev.phase.asmgen;
 
 import java.util.*;
+import prev.Compiler;
 import prev.data.mem.*;
 import prev.data.imc.code.expr.*;
 import prev.data.imc.visitor.*;
@@ -92,8 +93,9 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 		}
 
 		// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Subroutines
-		// Save first 8 registers before calling function
-		instructions.add(new AsmOPER("PUSHJ $8, " + call.label.name, null, null, null));
+		// Save required registers before calling function
+		String oper = String.format("PUSHJ $%s, %s", Compiler.cmdLineArgValue("--nregs"), call.label.name);
+		instructions.add(new AsmOPER(oper, null, null, null));
 
 		MemTemp dst = new MemTemp();
 		Vector<MemTemp> defs = new Vector<>(List.of(dst));
