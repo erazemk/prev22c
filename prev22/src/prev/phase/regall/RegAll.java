@@ -25,10 +25,10 @@ public class RegAll extends Phase {
 		this.nregs = nregs;
 	}
 
-	private void loadOffset(Vector<AsmInstr> instrs, Vector<MemTemp> uses, long offset) {
-		// Load offset (always reuse offsetTemp - uses)
-		// Code copied from asmgen/ExprGenerator/ImcCONST visitor
+	private Vector<AsmInstr> loadOffset(Vector<MemTemp> uses, long offset) {
+		Vector<AsmInstr> instrs = new Vector<>();
 		long val = Math.abs(offset);
+
 		instrs.add(new AsmOPER("SETL `d0, " + (short) (val & 0xFFFF), null, uses, null));
 		val >>= 16;
 
@@ -50,13 +50,15 @@ public class RegAll extends Phase {
 		if (offset < 0) {
 			instrs.add(new AsmOPER("NEG `d0, `s0", uses, uses, null));
 		}
+
+		return instrs;
 	}
 
 	public void allocate() {
 		for (Code code : AsmGen.codes) {
 
 			// Try building and coloring a graph until it succeeds
-			Graph finalGraph;
+			Graph finalGraph = new Graph();
 			do {
 				Graph graph = new Graph();
 
@@ -67,20 +69,13 @@ public class RegAll extends Phase {
 
 					// Convert every variable to a Vertex
 					for (MemTemp temp : combined) {
-
-						// Skip adding FP, since it has a separate register
-						if (temp == code.frame.FP) continue;
-
 						graph.addVertex(temp);
 					}
-
-					// TODO: Check if adding neighbors can be moved here
 				}
 
 				// Add all neighbors to variables
 				for (AsmInstr instr : code.instrs) {
-					if (instr.defs() != null) continue;
-					if (instr.defs().get(0) == code.frame.FP) continue;
+					if (instr.defs() == null || instr.defs().size() == 0) continue;
 
 					// Only outs are relevant
 					for (MemTemp out : instr.out()) {
@@ -88,69 +83,70 @@ public class RegAll extends Phase {
 					}
 				}
 
+				// FP is needed for adding neighbors, but not afterwards, since it has a
+				// predetermined register
+				graph.removeVertex(code.frame.FP);
+
+				// Store a list of all neighbors before simplifying graph
+				HashMap<Vertex, HashSet<Vertex>> neighbors = graph.getNeighbors();
+
 				// Simplify graph by removing vertices and handling spills
-				finalGraph = graph.copy();
 				Stack<Vertex> stack = new Stack<>();
 				do {
-
 					// Remove vertices with num of neighbors < num of regs
 					boolean changed;
 					do {
 						changed = false;
 
-						// Normal foreach doesn't work here, because modifying a HashMap while
-						// iterating over it isn't allowed
-						Iterator<Vertex> iterator = finalGraph.vertices.iterator();
-						while(iterator.hasNext()) {
-							Vertex vertex = iterator.next();
-
+						for (Vertex vertex : graph.vertices()) {
 							if (vertex.neighbors.size() < nregs) {
-								finalGraph.removeVertex(vertex);
+								graph.removeVertex(vertex.variable);
 								stack.push(vertex);
-								iterator.remove();
 								changed = true;
 							}
 						}
 					} while (changed);
 
-					// TODO: Check MOVE operations
-
 					// Check for spills
-					if (finalGraph.vertices.size() > 0) {
+					if (graph.vertices.size() > 0) {
 						Vertex maxVertex = null;
-						int maxNeighbors = 0;
+						int maxNeighbors = nregs;
 
 						// Find vertex with the greatest number of neighbors
-						for (Vertex vertex : finalGraph.vertexMap.values()) {
-							if (vertex.neighbors.size() > maxNeighbors) {
+						for (Vertex vertex : graph.vertices()) {
+							if (vertex.neighbors.size() >= maxNeighbors) {
 								maxNeighbors = vertex.neighbors.size();
 								maxVertex = vertex;
 							}
 						}
 
-						// maxVertex should never be null, this is to stop IDE from complaining
-						if (maxVertex == null) return;
-
-						// Mark vertex for spill and retry removing nodes
-						maxVertex.potentialSpill = true;
-						finalGraph.removeVertex(maxVertex);
-						stack.push(maxVertex);
+						if (maxVertex != null) {
+							// Remove the potential spill
+							graph.removeVertex(maxVertex.variable);
+							stack.push(maxVertex);
+						}
 					}
-				} while (finalGraph.vertices.size() > 0);
+				} while (!graph.vertices.isEmpty());
 
-				// Color first vertex in the graph
-				Vertex first = stack.pop();
-				first.color = 0;
-
-				// Try coloring all the other vertices
+				// Try coloring all the vertices
 				ArrayList<Vertex> spills = new ArrayList<>();
 				while (!stack.empty()) {
 					Vertex vertex = stack.pop();
 					boolean[] colors = new boolean[nregs];
 
+					// Re-add vertex to new graph
+					finalGraph.addVertex(vertex);
+
+					// Re-add vertex's neighbors
+					HashSet<Vertex> newNeighbors = neighbors.get(vertex);
+
 					// Check neighbors' colors
-					for (Vertex neighbor : vertex.neighbors) {
-						colors[neighbor.color] = true;
+					for (Vertex neighbor : newNeighbors) {
+						finalGraph.addNeighbors(vertex, neighbor);
+
+						if (neighbor.color >= 0) {
+							colors[neighbor.color] = true;
+						}
 					}
 
 					// Pick first available color
@@ -173,11 +169,12 @@ public class RegAll extends Phase {
 
 				// Modify code for each spill
 				for (Vertex spill : spills) {
+					// Don't restructure temps that were made from spilled temps
+					//if (spilled.contains(spill.variable)) continue;
+
 					Vector<AsmInstr> instrs = new Vector<>();
 					long ptrSize = new SemPtr(new SemVoid()).size();
 					code.tempSize += ptrSize;
-
-					// Offset = - size of existing local variables - current size of temps - 2 * pointer size
 					long offset = - code.frame.locsSize - code.tempSize - 2 * ptrSize;
 
 					for (AsmInstr instr : code.instrs) {
@@ -194,7 +191,7 @@ public class RegAll extends Phase {
 							Vector<MemTemp> uses = new Vector<>(List.of(offsetTemp));
 							Vector<MemTemp> defs = new Vector<>(List.of(newTemp));
 
-							loadOffset(instrs, uses, offset);
+							instrs.addAll(loadOffset(uses, offset));
 
 							// Load value from offset
 							instrs.add(new AsmOPER("LDO `d0, $254, `s0", uses, defs, null));
@@ -207,6 +204,9 @@ public class RegAll extends Phase {
 
 							// Add the new modified instruction to the list of instructions
 							instrs.add(new AsmOPER(((AsmOPER) instr).instr(), newUses, instr.defs(), instr.jumps()));
+
+							// Store new temp and offset temp to prevent them from spilling
+							//spilled.addAll(List.of(newTemp, offsetTemp));
 						}
 
 						if (defsSpill) {
@@ -219,11 +219,14 @@ public class RegAll extends Phase {
 							// Add the new modified instruction to the list of instructions
 							instrs.add(new AsmOPER(((AsmOPER) instr).instr(), instr.uses(), defs, instr.jumps()));
 
-							loadOffset(instrs, uses, offset);
+							instrs.addAll(loadOffset(uses, offset));
 
 							// Store value to offset
 							uses = new Vector<>(List.of(newTemp, offsetTemp));
-							instrs.add(new AsmOPER("STO `s0, $254, `s0", uses, null, null));
+							instrs.add(new AsmOPER("STO `s0, $254, `s1", uses, null, null));
+
+							// Store new temp and offset temp to prevent them from spilling
+							//spilled.addAll(List.of(newTemp, offsetTemp));
 						}
 					}
 
@@ -235,7 +238,7 @@ public class RegAll extends Phase {
 
 			// Replace temporary variables with registers
 			tempToReg.put(code.frame.FP, 253);
-			for (Vertex vertex : finalGraph.vertices) {
+			for (Vertex vertex : finalGraph.vertices()) {
 				// Skip vertices that could not be moved to registers
 				if (vertex.color == -1) continue;
 
