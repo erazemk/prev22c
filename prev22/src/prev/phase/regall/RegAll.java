@@ -8,6 +8,7 @@ import prev.data.typ.SemPtr;
 import prev.data.typ.SemVoid;
 import prev.phase.*;
 import prev.phase.asmgen.*;
+import prev.phase.livean.LiveAn;
 
 /**
  * Register allocation.
@@ -56,6 +57,10 @@ public class RegAll extends Phase {
 
 	public void allocate() {
 		for (Code code : AsmGen.codes) {
+
+			// Re-do liveness analysis
+			LiveAn liveAn = new LiveAn();
+			liveAn.compLifetimes();
 
 			// Try building and coloring a graph until it succeeds
 			Graph finalGraph = new Graph();
@@ -194,7 +199,7 @@ public class RegAll extends Phase {
 							instrs.addAll(loadOffset(uses, offset));
 
 							// Load value from offset
-							instrs.add(new AsmOPER("LDO `d0, $254, `s0", uses, defs, null));
+							instrs.add(new AsmOPER("LDO `d0, $253, `s0", uses, defs, null));
 
 							// Replace old temp variable with new one if needed
 							Vector<MemTemp> newUses = new Vector<>();
@@ -223,7 +228,7 @@ public class RegAll extends Phase {
 
 							// Store value to offset
 							uses = new Vector<>(List.of(newTemp, offsetTemp));
-							instrs.add(new AsmOPER("STO `s0, $254, `s1", uses, null, null));
+							instrs.add(new AsmOPER("STO `s0, $253, `s1", uses, null, null));
 
 							// Store new temp and offset temp to prevent them from spilling
 							//spilled.addAll(List.of(newTemp, offsetTemp));
