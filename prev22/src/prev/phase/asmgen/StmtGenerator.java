@@ -1,11 +1,17 @@
 package prev.phase.asmgen;
 
-import java.util.*;
-import prev.data.imc.code.expr.*;
+import prev.data.asm.AsmInstr;
+import prev.data.asm.AsmLABEL;
+import prev.data.asm.AsmMOVE;
+import prev.data.asm.AsmOPER;
+import prev.data.imc.code.expr.ImcMEM;
 import prev.data.imc.code.stmt.*;
-import prev.data.imc.visitor.*;
-import prev.data.mem.*;
-import prev.data.asm.*;
+import prev.data.imc.visitor.ImcVisitor;
+import prev.data.mem.MemLabel;
+import prev.data.mem.MemTemp;
+
+import java.util.List;
+import java.util.Vector;
 
 /**
  * Machine code generator for statements.
@@ -22,7 +28,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 		// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Branches
 		// If condition is not met (cond = 0) jump to negLabel, else no need to do anything since
 		// posLabel is right behind the conditional check
-		instructions.add(new AsmOPER("BZ `s0, " + cjump.negLabel.name, uses, null, jumps));
+		instructions.add(new AsmOPER("BZ `s0," + cjump.negLabel.name, uses, null, jumps));
 
 		return instructions;
 	}
@@ -66,13 +72,13 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 				defs = new Vector<>(List.of(temp));
 
 				// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Load
-				instructions.add(new AsmMOVE("LDO `d0, `s0, 0", uses, defs));
+				instructions.add(new AsmMOVE("LDO `d0,`s0,0", uses, defs));
 
 				// s0 == value to store (temp), s1 == where to store it (dst)
 				uses = new Vector<>(List.of(temp, dst));
 
 				// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Store
-				instructions.add(new AsmOPER("STO `s0, `s1, 0", uses, null, null));
+				instructions.add(new AsmOPER("STO `s0,`s1,0", uses, null, null));
 			} else {
 				// With REG -> MEM just store register value into memory
 				src = move.src.accept(new ExprGenerator(), instructions);
@@ -81,7 +87,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 				uses = new Vector<>(List.of(src, dst));
 
 				// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Store
-				instructions.add(new AsmOPER("STO `s0, `s1, 0", uses, null, null));
+				instructions.add(new AsmOPER("STO `s0,`s1,0", uses, null, null));
 			}
 		} else { // X -> REG
 			if (move.src instanceof ImcMEM) {
@@ -93,7 +99,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 				defs = new Vector<>(List.of(dst));
 
 				// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Load
-				instructions.add(new AsmMOVE("LDO `d0, `s0, 0", uses, defs));
+				instructions.add(new AsmMOVE("LDO `d0,`s0,0", uses, defs));
 			} else {
 				// With REG -> REG just move the value from one register into another
 				src = move.src.accept(new ExprGenerator(), instructions);
@@ -104,7 +110,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 
 				// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#SETH
 				// 'SET $X,$Y' translates into 'OR $X,$Y,0', so no need for 4 separate instructions
-				instructions.add(new AsmMOVE("SET `d0, `s0", uses, defs));
+				instructions.add(new AsmMOVE("SET `d0,`s0", uses, defs));
 			}
 		}
 

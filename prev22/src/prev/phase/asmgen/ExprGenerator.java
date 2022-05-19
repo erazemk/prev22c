@@ -1,11 +1,15 @@
 package prev.phase.asmgen;
 
-import java.util.*;
 import prev.Compiler;
-import prev.data.mem.*;
+import prev.data.asm.AsmInstr;
+import prev.data.asm.AsmMOVE;
+import prev.data.asm.AsmOPER;
 import prev.data.imc.code.expr.*;
-import prev.data.imc.visitor.*;
-import prev.data.asm.*;
+import prev.data.imc.visitor.ImcVisitor;
+import prev.data.mem.MemTemp;
+
+import java.util.List;
+import java.util.Vector;
 
 /**
  * Machine code generator for expressions.
@@ -25,54 +29,54 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 		switch (binOp.oper) {
 			// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Arithmetic
 			//       http://mmix.cs.hm.edu/doc/instructions-en.html#Branches
-			case OR -> instructions.add(new AsmOPER("OR `d0, `s0, `s1", uses, defs, null));
-			case AND -> instructions.add(new AsmOPER("AND `d0, `s0, `s1", uses, defs, null));
+			case OR -> instructions.add(new AsmOPER("OR `d0,`s0,`s1", uses, defs, null));
+			case AND -> instructions.add(new AsmOPER("AND `d0,`s0,`s1", uses, defs, null));
 			case EQU -> {
-				instructions.add(new AsmOPER("CMP `d0, `s0, `s1", uses, defs, null));
+				instructions.add(new AsmOPER("CMP `d0,`s0,`s1", uses, defs, null));
 
 				// Zero or Set: If zero (0 -> EQU)
-				instructions.add(new AsmOPER("ZSZ `d0, `s0, 1", defs, defs, null));
+				instructions.add(new AsmOPER("ZSZ `d0,`s0,1", defs, defs, null));
 			}
 			case NEQ -> {
-				instructions.add(new AsmOPER("CMP `d0, `s0, `s1", uses, defs, null));
+				instructions.add(new AsmOPER("CMP `d0,`s0,`s1", uses, defs, null));
 
 				// Zero or Set: If nonzero (+1/-1 -> NEQ)
-				instructions.add(new AsmOPER("ZSNZ `d0, `s0, 1", defs, defs, null));
+				instructions.add(new AsmOPER("ZSNZ `d0,`s0,1", defs, defs, null));
 			}
 			case LTH -> {
-				instructions.add(new AsmOPER("CMP `d0, `s0, `s1", uses, defs, null));
+				instructions.add(new AsmOPER("CMP `d0,`s0,`s1", uses, defs, null));
 
 				// Zero or Set: If negative (-1 -> LTH)
-				instructions.add(new AsmOPER("ZSN `d0, `s0, 1", defs, defs, null));
+				instructions.add(new AsmOPER("ZSN `d0,`s0,1", defs, defs, null));
 			}
 			case GTH -> {
-				instructions.add(new AsmOPER("CMP `d0, `s0, `s1", uses, defs, null));
+				instructions.add(new AsmOPER("CMP `d0,`s0,`s1", uses, defs, null));
 
 				// Zero or Set: If positive (+1 -> GTH)
-				instructions.add(new AsmOPER("ZSP `d0, `s0, 1", defs, defs, null));
+				instructions.add(new AsmOPER("ZSP `d0,`s0,1", defs, defs, null));
 			}
 			case LEQ -> {
-				instructions.add(new AsmOPER("CMP `d0, `s0, `s1", uses, defs, null));
+				instructions.add(new AsmOPER("CMP `d0,`s0,`s1", uses, defs, null));
 
 				// Zero or Set: If non-positive (-1/0 -> LEQ)
-				instructions.add(new AsmOPER("ZSNP `d0, `s0, 1", defs, defs, null));
+				instructions.add(new AsmOPER("ZSNP `d0,`s0,1", defs, defs, null));
 			}
 			case GEQ -> {
-				instructions.add(new AsmOPER("CMP `d0, `s0, `s1", uses, defs, null));
+				instructions.add(new AsmOPER("CMP `d0,`s0,`s1", uses, defs, null));
 
 				// Zero or Set: If non-negative (0/+1 -> GEQ)
-				instructions.add(new AsmOPER("ZSNN `d0, `s0, 1", defs, defs, null));
+				instructions.add(new AsmOPER("ZSNN `d0,`s0,1", defs, defs, null));
 			}
-			case ADD -> instructions.add(new AsmOPER("ADD `d0, `s0, `s1", uses, defs, null));
-			case SUB -> instructions.add(new AsmOPER("SUB `d0, `s0, `s1", uses, defs, null));
-			case MUL -> instructions.add(new AsmOPER("MUL `d0, `s0, `s1", uses, defs, null));
-			case DIV -> instructions.add(new AsmOPER("DIV `d0, `s0, `s1", uses, defs, null));
+			case ADD -> instructions.add(new AsmOPER("ADD `d0,`s0,`s1", uses, defs, null));
+			case SUB -> instructions.add(new AsmOPER("SUB `d0,`s0,`s1", uses, defs, null));
+			case MUL -> instructions.add(new AsmOPER("MUL `d0,`s0,`s1", uses, defs, null));
+			case DIV -> instructions.add(new AsmOPER("DIV `d0,`s0,`s1", uses, defs, null));
 			case MOD -> {
-				instructions.add(new AsmOPER("DIV `d0, `s0, `s1", uses, defs, null));
+				instructions.add(new AsmOPER("DIV `d0,`s0,`s1", uses, defs, null));
 
 				// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#System
 				// DIV leaves the remainder in rR
-				instructions.add(new AsmOPER("GET `d0, rR", null, defs, null));
+				instructions.add(new AsmOPER("GET `d0,rR", null, defs, null));
 			}
 		}
 
@@ -89,12 +93,12 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
 			// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Store
 			// $254 = SP, store each arg at SP + its offset (s0 <- $254 + offset)
-			instructions.add(new AsmOPER("STO `s0, $254, " + offset, uses, null, null));
+			instructions.add(new AsmOPER("STO `s0,$254," + offset, uses, null, null));
 		}
 
 		// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Subroutines
 		// Save required registers before calling function
-		String oper = String.format("PUSHJ $%s, %s", Compiler.cmdLineArgValue("--nregs"), call.label.name);
+		String oper = String.format("PUSHJ $%s,%s", Compiler.cmdLineArgValue("--nregs"), call.label.name);
 		instructions.add(new AsmOPER(oper, null, null, null));
 
 		MemTemp dst = new MemTemp();
@@ -102,7 +106,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
 		// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Load
 		// Get the return value
-		instructions.add(new AsmOPER("LDO `d0, $254, 0", null, defs, null));
+		instructions.add(new AsmOPER("LDO `d0,$254,0", null, defs, null));
 
 		return dst;
 	}
@@ -116,27 +120,27 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 		// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Address
 		// Set all bytes one after another using SETL, INCML, INCMH, INCH (short because they set 16-bit constants)
 		// Since creating vectors is wasteful, just use constants directly
-		instructions.add(new AsmOPER("SETL `d0, " + (short) (val & 0xFFFF), null, defs, null));
+		instructions.add(new AsmOPER("SETL `d0," + (short) (val & 0xFFFF), null, defs, null));
 		val >>= 16;
 
 		if (val > 0) {
-			instructions.add(new AsmOPER("INCML `d0, " + (short) (val & 0xFFFF), null, defs, null));
+			instructions.add(new AsmOPER("INCML `d0," + (short) (val & 0xFFFF), null, defs, null));
 			val >>= 16;
 		}
 
 		if (val > 0) {
-			instructions.add(new AsmOPER("INCMH `d0, " + (short) (val & 0xFFFF), null, defs, null));
+			instructions.add(new AsmOPER("INCMH `d0," + (short) (val & 0xFFFF), null, defs, null));
 			val >>= 16;
 		}
 
 		if (val > 0) {
-			instructions.add(new AsmOPER("INCH `d0, " + (short) (val & 0xFFFF), null, defs, null));
+			instructions.add(new AsmOPER("INCH `d0," + (short) (val & 0xFFFF), null, defs, null));
 		}
 
 		// Negate the value if needed
 		if (constant.value < 0) {
 			// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Arithmetic
-			instructions.add(new AsmOPER("NEG `d0, `s0", defs, defs, null));
+			instructions.add(new AsmOPER("NEG `d0,`s0", defs, defs, null));
 		}
 
 		return dst;
@@ -151,7 +155,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
 		// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Signed_Load
 		// Use an assembly move since the offset is 0
-		instructions.add(new AsmMOVE("LDO `d0, `s0, 0", uses, defs));
+		instructions.add(new AsmMOVE("LDO `d0,`s0,0", uses, defs));
 
 		return dst;
 	}
@@ -162,7 +166,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
 		// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#LDA
 		// LDA stores the label's address in d0
-		instructions.add(new AsmOPER("LDA `d0, " + name.label.name, null, defs, null));
+		instructions.add(new AsmOPER("LDA `d0," + name.label.name, null, defs, null));
 
 		return dst;
 	}
@@ -185,10 +189,10 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 
 		instructions.add(switch (unOp.oper) {
 			// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Arithmetic
-			case NEG -> new AsmOPER("NEG `d0, `s0", uses, defs, null);
+			case NEG -> new AsmOPER("NEG `d0,`s0", uses, defs, null);
 
 			// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Bit_Operations
-			case NOT -> new AsmOPER("NAND `d0, `s0, 1", uses, defs, null);
+			case NOT -> new AsmOPER("NAND `d0,`s0,1", uses, defs, null);
 		});
 
 		return dst;

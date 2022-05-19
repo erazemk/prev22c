@@ -1,14 +1,16 @@
 package prev.phase.regall;
 
-import java.util.*;
-
-import prev.data.mem.*;
-import prev.data.asm.*;
+import prev.data.asm.AsmInstr;
+import prev.data.asm.AsmOPER;
+import prev.data.asm.Code;
+import prev.data.mem.MemTemp;
 import prev.data.typ.SemPtr;
 import prev.data.typ.SemVoid;
-import prev.phase.*;
-import prev.phase.asmgen.*;
+import prev.phase.Phase;
+import prev.phase.asmgen.AsmGen;
 import prev.phase.livean.LiveAn;
+
+import java.util.*;
 
 /**
  * Register allocation.
@@ -30,26 +32,26 @@ public class RegAll extends Phase {
 		Vector<AsmInstr> instrs = new Vector<>();
 		long val = Math.abs(offset);
 
-		instrs.add(new AsmOPER("SETL `d0, " + (short) (val & 0xFFFF), null, uses, null));
+		instrs.add(new AsmOPER("SETL `d0," + (short) (val & 0xFFFF), null, uses, null));
 		val >>= 16;
 
 		if (val > 0) {
-			instrs.add(new AsmOPER("INCML `d0, " + (short) (val & 0xFFFF), null, uses, null));
+			instrs.add(new AsmOPER("INCML `d0," + (short) (val & 0xFFFF), null, uses, null));
 			val >>= 16;
 		}
 
 		if (val > 0) {
-			instrs.add(new AsmOPER("INCMH `d0, " + (short) (val & 0xFFFF), null, uses, null));
+			instrs.add(new AsmOPER("INCMH `d0," + (short) (val & 0xFFFF), null, uses, null));
 			val >>= 16;
 		}
 
 		if (val > 0) {
-			instrs.add(new AsmOPER("INCH `d0, " + (short) (val & 0xFFFF), null, uses, null));
+			instrs.add(new AsmOPER("INCH `d0," + (short) (val & 0xFFFF), null, uses, null));
 		}
 
 		// Negate the value if needed
 		if (offset < 0) {
-			instrs.add(new AsmOPER("NEG `d0, `s0", uses, uses, null));
+			instrs.add(new AsmOPER("NEG `d0,`s0", uses, uses, null));
 		}
 
 		return instrs;
@@ -199,7 +201,7 @@ public class RegAll extends Phase {
 							instrs.addAll(loadOffset(uses, offset));
 
 							// Load value from offset
-							instrs.add(new AsmOPER("LDO `d0, $253, `s0", uses, defs, null));
+							instrs.add(new AsmOPER("LDO `d0,$253,`s0", uses, defs, null));
 
 							// Replace old temp variable with new one if needed
 							Vector<MemTemp> newUses = new Vector<>();
@@ -228,7 +230,7 @@ public class RegAll extends Phase {
 
 							// Store value to offset
 							uses = new Vector<>(List.of(newTemp, offsetTemp));
-							instrs.add(new AsmOPER("STO `s0, $253, `s1", uses, null, null));
+							instrs.add(new AsmOPER("STO `s0,$253,`s1", uses, null, null));
 
 							// Store new temp and offset temp to prevent them from spilling
 							//spilled.addAll(List.of(newTemp, offsetTemp));

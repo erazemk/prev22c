@@ -86,25 +86,25 @@ public class MMIXTranslator {
 
 		// Add label to first instruction if needed
 		if (label != null) {
-			addInstruction(label, "SETL", "$0, " + (absOffset & 0xFFFF));
+			addInstruction(label, "SETL", "$0," + (absOffset & 0xFFFF));
 		} else {
-			addInstruction("SETL", "$0, " + (absOffset & 0xFFFF));
+			addInstruction("SETL", "$0," + (absOffset & 0xFFFF));
 		}
 
 		if ((absOffset >>= 16) > 0) {
-			addInstruction("INCML", "$0, " + (absOffset & 0xFFFF));
+			addInstruction("INCML", "$0," + (absOffset & 0xFFFF));
 		}
 
 		if ((absOffset >>= 16) > 0) {
-			addInstruction("INCMH", "$0, " + (absOffset & 0xFFFF));
+			addInstruction("INCMH", "$0," + (absOffset & 0xFFFF));
 		}
 
 		if ((absOffset >>= 16) > 0) {
-			addInstruction("INCH", "$0, " + (absOffset & 0xFFFF));
+			addInstruction("INCH", "$0," + (absOffset & 0xFFFF));
 		}
 
 		if (offset < 0) {
-			addInstruction("NEG", "$0, 0, $0");
+			addInstruction("NEG", "$0,0,$0");
 		}
 	}
 
@@ -139,7 +139,7 @@ public class MMIXTranslator {
 			} else {
 				// Append newline and null terminator to string
 				addInstruction(chunk.label.name, "BYTE", "\"" + chunk.init +
-					"\", 10, 0");
+					"\",10,0");
 			}
 		}
 
@@ -149,16 +149,16 @@ public class MMIXTranslator {
 		addNewline();
 
 		// Set stack pointer
-		addInstruction("SETH", "$254, 7000");
+		addInstruction("SETH", "$254,7000");
 
 		// Call main
-		addInstruction("Init", "PUSHJ", "$" + nregs + ", _main");
+		addInstruction("Init", "PUSHJ", "$" + nregs + ",_main");
 
 		// Copy return value into $255 (used for sending data to system calls)
-		addInstruction("LDA", "$255, $254");
+		addInstruction("LDA", "$255,$254");
 
 		// Exit (exit code is in $255)
-		addInstruction("TRAP", "0, Halt, 0");
+		addInstruction("TRAP", "0,Halt,0");
 	}
 
 	private void addPrologue(Code code) {
@@ -166,20 +166,20 @@ public class MMIXTranslator {
 
 		// Save old FP
 		loadValue(- code.frame.locsSize - 8, code.frame.label.name); // FP
-		addInstruction("SUB", "$0, $254, $0"); // $0 <- SP - $0
-		addInstruction("STO", "$253, $0, 0"); // M[$0] <- FP
+		addInstruction("SUB", "$0,$254,$0"); // $0 <- SP - $0
+		addInstruction("STO", "$253,$0,0"); // M[$0] <- FP
 
 		// Save return address
-		addInstruction("SUB", "$0, $0, 8"); // $0 <- ret addr (oldFP - 8)
-		addInstruction("GET", "$1, rJ"); // $1 <- rJ
-		addInstruction("STO", "$1, $0, 0"); // M[$0] <- $1
+		addInstruction("SUB", "$0,$0,8"); // $0 <- ret addr (oldFP - 8)
+		addInstruction("GET", "$1,rJ"); // $1 <- rJ
+		addInstruction("STO", "$1,$0,0"); // M[$0] <- $1
 
 		// Set new FP
-		addInstruction("SET", "$253, $254"); // FP <- SP
+		addInstruction("SET", "$253,$254"); // FP <- SP
 
 		// Set new SP
 		loadValue(code.frame.size + code.tempSize); // Actual frame size
-		addInstruction("SUB", "$254, $254, $0");
+		addInstruction("SUB", "$254,$254,$0");
 
 		 // Jump to function body
 		addInstruction("JMP", code.entryLabel.name);
@@ -194,7 +194,7 @@ public class MMIXTranslator {
 				// Check if there are two consecutive labels
 				if (label != null) {
 					// Create a "NOP" instruction for the first label
-					addInstruction(label, "SET", "$0, $0");
+					addInstruction(label, "SET", "$0,$0");
 				}
 
 				label = instr.toString();
@@ -214,23 +214,23 @@ public class MMIXTranslator {
 
 	private void addEpilogue(Code code) {
 		// Save return value
-		addInstruction(code.exitLabel.name, "STO", code.frame.RV + ", $253, 0");
+		addInstruction(code.exitLabel.name, "STO", code.frame.RV + ",$253,0");
 
 		// Set SP
-		addInstruction("SET", "$254, $253"); // SP <- FP
+		addInstruction("SET", "$254,$253"); // SP <- FP
 
 		// Restore FP
 		loadValue(- code.frame.locsSize - 8); // FP
-		addInstruction("SUB", "$0, $254, $0"); // $0 <- SP - FP
-		addInstruction("LDO", "$253, $0, 0"); // FP <- $0
+		addInstruction("SUB", "$0,$254,$0"); // $0 <- SP - FP
+		addInstruction("LDO", "$253,$0,0"); // FP <- $0
 
 		// Restore return address
-		addInstruction("SUB", "$0, $0, 8"); // FP <- FP - 8
-		addInstruction("LDO", "$0, $0, 0"); // FP <- M[$0]
-		addInstruction("PUT", "rJ, $0"); // RJ <- FP
+		addInstruction("SUB", "$0,$0,8"); // FP <- FP - 8
+		addInstruction("LDO", "$0,$0,0"); // FP <- M[$0]
+		addInstruction("PUT", "rJ,$0"); // RJ <- FP
 
 		// Return from function
-		addInstruction("POP", nregs + ", 0");
+		addInstruction("POP", nregs + ",0");
 	}
 
 	private void addStdlib(Code code) {}
