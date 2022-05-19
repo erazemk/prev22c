@@ -4,7 +4,7 @@ prev22/**/*.class
 prev22/*~
 prev22/prg/*.html
 prev22/prg/*.xml
-prev22/prg/*.mms
+prev22/prg/*.mm*
 prev22/src/prev/phase/**/*.interp
 prev22/src/prev/phase/**/*.tokens
 prev22/src/prev/phase/**/.antlr
