@@ -1,5 +1,6 @@
 phase = all
 debug =
+nregs = 8
 
 all: help
 
@@ -14,25 +15,25 @@ help:
 	@echo "Usage: make [clean|compile|test|zip] (arguments)"
 	@echo
 	@echo "Options:"
-	@echo "    clean                                   Delete artifacts"
-	@echo "    compile                                 Compile the compiler"
-	@echo "    help                                    Print this message"
-	@echo "    test file=<file> (phase=<phase>)        Run the specified test"
-	@echo "    zip name=<name>                         Create a zip archive"
+	@echo "    clean                                          Delete artifacts"
+	@echo "    compile                                        Compile the compiler"
+	@echo "    help                                           Print this message"
+	@echo "    test file=<file> nregs=x (phase=<phase>)       Run the specified test"
+	@echo "    zip name=<name>                                Create a zip archive"
 
 test:
     ifdef file
 		$(MAKE) -s -C prev22 clean all
-		$(MAKE) -s -C prev22/prg "$(file)" PHASE="$(phase)" DEBUG="$(debug)"
+		$(MAKE) -s -C prev22/prg "$(file)" PHASE="$(phase)" DEBUG="$(debug)" NREGS="$(nregs)"
     else
-		@echo "Test file must be specified!"
-		@echo "Usage: make test file=<file> (phase=<phase>) (debug=<bool>)"
+		@echo "Missing test file name!"
+		@echo "Usage: make test file=<file> nregs=x (phase=<phase>) (debug=<bool>)"
     endif
 
 zip:
     ifdef name
 		$(MAKE) -s -C prev22 clean
-		rm -rf out prev22/gen prev22/src/prev/phase/**/.antlr
+		rm -rf out prev22/gen prev22/src/prev/phase/**/.antlr ./*.zip prev22/lib/antlr-*.jar
 		zip -r "$(name).zip" prev22 -x prev22/prev22.iml -x prev22/prg/*.p22
     else
 		@echo "Zip name must be specified!"

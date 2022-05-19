@@ -1,20 +1,27 @@
 package prev;
 
-import java.util.*;
-
-import org.antlr.v4.runtime.*;
-
-import prev.common.report.*;
-import prev.phase.lexan.*;
-import prev.phase.synan.*;
-import prev.phase.abstr.*;
+import org.antlr.v4.runtime.Token;
+import prev.common.report.Report;
+import prev.phase.abstr.AbsLogger;
+import prev.phase.abstr.Abstr;
+import prev.phase.all.MMIXTranslator;
+import prev.phase.asmgen.AsmGen;
+import prev.phase.imcgen.CodeGenerator;
+import prev.phase.imcgen.ImcGen;
+import prev.phase.imcgen.ImcLogger;
+import prev.phase.imclin.ChunkGenerator;
+import prev.phase.imclin.ImcLin;
+import prev.phase.imclin.Interpreter;
+import prev.phase.lexan.LexAn;
+import prev.phase.livean.LiveAn;
+import prev.phase.memory.MemEvaluator;
+import prev.phase.memory.MemLogger;
+import prev.phase.memory.Memory;
+import prev.phase.regall.RegAll;
 import prev.phase.seman.*;
-import prev.phase.memory.*;
-import prev.phase.imcgen.*;
-import prev.phase.imclin.*;
-import prev.phase.asmgen.*;
-import prev.phase.livean.*;
-import prev.phase.regall.*;
+import prev.phase.synan.SynAn;
+
+import java.util.HashMap;
 
 /**
  * The compiler.
@@ -24,7 +31,7 @@ public class Compiler {
 	// COMMAND LINE ARGUMENTS
 
 	/** All valid phases of the compiler. */
-	private static final String phases = "none|lexan|synan|abstr|seman|memory|imcgen|imclin|asmgen|livean|regall";
+	private static final String phases = "none|lexan|synan|abstr|seman|memory|imcgen|imclin|asmgen|livean|regall|all";
 
 	/** A flag for enabling the printing of Report.info messages */
 	public static boolean debug = false;
@@ -191,9 +198,11 @@ public class Compiler {
 					Abstr.tree.accept(new ChunkGenerator(), null);
 					imclin.log();
 
-					// Interpreter
-					//Interpreter interpreter = new Interpreter(ImcLin.dataChunks(), ImcLin.codeChunks());
-					//System.out.println("EXIT CODE: " + interpreter.run("_main"));
+					// Only run interpreter if this is the last phase
+					if (Compiler.cmdLineArgValue("--target-phase").equals("imclin")) {
+						Interpreter interpreter = new Interpreter(ImcLin.dataChunks(), ImcLin.codeChunks());
+						System.out.println("EXIT CODE: " + interpreter.run("_main"));
+					}
 				}
 				if (Compiler.cmdLineArgValue("--target-phase").equals("imclin"))
 					break;
@@ -220,6 +229,12 @@ public class Compiler {
 					regall.log();
 				}
 				if (Compiler.cmdLineArgValue("--target-phase").equals("regall"))
+					break;
+
+				// Working compiler.
+				MMIXTranslator translator = new MMIXTranslator(cmdLine.get("--dst-file-name"));
+				translator.translate();
+				if (Compiler.cmdLineArgValue("--target-phase").equals("all"))
 					break;
 			}
 
