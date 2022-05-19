@@ -1,0 +1,8 @@
+var i : int
+var j : int
+
+fun main() : int = {
+	i = 1;
+	j = i + 2;
+	j;
+}

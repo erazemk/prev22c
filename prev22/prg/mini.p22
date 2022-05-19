@@ -1,0 +1,6 @@
+var i : int
+
+fun main() : int = {
+	i = 1;
+	i;
+}
