@@ -152,7 +152,7 @@ public class MMIXTranslator {
 		addInstruction("SETH", "$254,7000");
 
 		// Call main
-		addInstruction("Init", "PUSHJ", "$" + nregs + ",_main");
+		addInstruction("Main", "PUSHJ", "$" + nregs + ",_main");
 
 		// Copy return value into $255 (used for sending data to system calls)
 		addInstruction("LDA", "$255,$254");
@@ -214,7 +214,9 @@ public class MMIXTranslator {
 
 	private void addEpilogue(Code code) {
 		// Save return value
-		addInstruction(code.exitLabel.name, "STO", code.frame.RV + ",$253,0");
+		//System.out.println("RV: " + code.frame.RV);
+		addInstruction(code.exitLabel.name, "STO",
+			"$" + tempToReg.get(code.frame.RV) + ",$253,0");
 
 		// Set SP
 		addInstruction("SET", "$254,$253"); // SP <- FP
@@ -249,7 +251,23 @@ public class MMIXTranslator {
 					String jmpLabel = text[text.length - 1].strip();
 					if (label.equals(jmpLabel)) {
 						instructions.remove(prevInstruction);
+						i--; // Fix positioning, since an element was removed
 					}
+				}
+			}
+		}
+
+		// Remove unnecessary sets
+		for (int i = 0; i < instructions.size(); i++) {
+			String instruction = instructions.get(i);
+			if (instruction.contains("SET")) {
+				String[] params = instruction.split("\t");
+				params = params[params.length - 1].split(",");
+
+				// If writing to same register, remove the instruction
+				if (params[0].strip().equals(params[1].strip())) {
+					instructions.remove(instruction);
+					i--; // Fix positioning, since an element was removed
 				}
 			}
 		}
