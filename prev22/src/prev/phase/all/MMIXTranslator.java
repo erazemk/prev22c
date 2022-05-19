@@ -5,6 +5,7 @@ import prev.data.asm.AsmInstr;
 import prev.data.asm.AsmLABEL;
 import prev.data.asm.Code;
 import prev.data.lin.LinDataChunk;
+import prev.data.mem.MemTemp;
 import prev.phase.asmgen.AsmGen;
 import prev.phase.imclin.ImcLin;
 
@@ -12,6 +13,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Working compiler.
@@ -20,10 +22,12 @@ public class MMIXTranslator {
 
 	private final String outputFile;
 	private final ArrayList<String> instructions;
+	private final HashMap<MemTemp, Integer> tempToReg;
 	private final String nregs = Compiler.cmdLineArgValue("--nregs");
 
-	public MMIXTranslator(String outputFile) {
+	public MMIXTranslator(String outputFile, HashMap<MemTemp, Integer> tempToReg) {
 		this.outputFile = outputFile;
+		this.tempToReg = tempToReg;
 		instructions = new ArrayList<>();
 	}
 
@@ -145,7 +149,7 @@ public class MMIXTranslator {
 		addNewline();
 
 		// Set stack pointer
-		addInstruction("SETH", "$253, 7000");
+		addInstruction("SETH", "$254, 7000");
 
 		// Call main
 		addInstruction("Init", "PUSHJ", "$" + nregs + ", _main");
@@ -162,8 +166,8 @@ public class MMIXTranslator {
 
 		// Save old FP
 		loadValue(- code.frame.locsSize - 8, code.frame.label.name); // FP
-		addInstruction("SUB", "$0, $253, $0"); // $0 <- SP - $0
-		addInstruction("STO", "$254, $0, 0"); // M[$0] <- FP
+		addInstruction("SUB", "$0, $254, $0"); // $0 <- SP - $0
+		addInstruction("STO", "$253, $0, 0"); // M[$0] <- FP
 
 		// Save return address
 		addInstruction("SUB", "$0, $0, 8"); // $0 <- ret addr (oldFP - 8)
@@ -171,11 +175,11 @@ public class MMIXTranslator {
 		addInstruction("STO", "$1, $0, 0"); // M[$0] <- $1
 
 		// Set new FP
-		addInstruction("SET", "$254, $253"); // FP <- SP
+		addInstruction("SET", "$253, $254"); // FP <- SP
 
 		// Set new SP
 		loadValue(code.frame.size + code.tempSize); // Actual frame size
-		addInstruction("SUB", "$253, $253, $0");
+		addInstruction("SUB", "$254, $254, $0");
 
 		 // Jump to function body
 		addInstruction("JMP", code.entryLabel.name);
@@ -198,7 +202,7 @@ public class MMIXTranslator {
 			}
 
 			// For nicer output, split instruction into mnemonic and parameters
-			String[] split = instr.toString().split(" ", 2);
+			String[] split = instr.toString(tempToReg).split(" ", 2);
 			if (label != null) {
 				addInstruction(label, split[0], split[1]);
 				label = null;
@@ -210,15 +214,15 @@ public class MMIXTranslator {
 
 	private void addEpilogue(Code code) {
 		// Save return value
-		addInstruction(code.exitLabel.name, "STO", code.frame.RV + ", $254, 0");
+		addInstruction(code.exitLabel.name, "STO", code.frame.RV + ", $253, 0");
 
 		// Set SP
-		addInstruction("SET", "$253, $254"); // SP <- FP
+		addInstruction("SET", "$254, $253"); // SP <- FP
 
 		// Restore FP
 		loadValue(- code.frame.locsSize - 8); // FP
-		addInstruction("SUB", "$0, $253, $0"); // $0 <- SP - FP
-		addInstruction("LDO", "$254, $0, 0"); // FP <- $0
+		addInstruction("SUB", "$0, $254, $0"); // $0 <- SP - FP
+		addInstruction("LDO", "$253, $0, 0"); // FP <- $0
 
 		// Restore return address
 		addInstruction("SUB", "$0, $0, 8"); // FP <- FP - 8

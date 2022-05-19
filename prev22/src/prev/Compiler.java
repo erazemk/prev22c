@@ -2,6 +2,7 @@ package prev;
 
 import org.antlr.v4.runtime.Token;
 import prev.common.report.Report;
+import prev.data.mem.MemTemp;
 import prev.phase.abstr.AbsLogger;
 import prev.phase.abstr.Abstr;
 import prev.phase.all.MMIXTranslator;
@@ -224,15 +225,17 @@ public class Compiler {
 					break;
 
 				// Register allocation.
+				HashMap<MemTemp, Integer> tempToReg;
 				try (RegAll regall = new RegAll(Integer.decode(cmdLine.get("--nregs")))) {
 					regall.allocate();
 					regall.log();
+					tempToReg = regall.tempToReg;
 				}
 				if (Compiler.cmdLineArgValue("--target-phase").equals("regall"))
 					break;
 
 				// Working compiler.
-				MMIXTranslator translator = new MMIXTranslator(cmdLine.get("--dst-file-name"));
+				MMIXTranslator translator = new MMIXTranslator(cmdLine.get("--dst-file-name"), tempToReg);
 				translator.translate();
 				if (Compiler.cmdLineArgValue("--target-phase").equals("all"))
 					break;
