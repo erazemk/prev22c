@@ -1,10 +1,12 @@
 package prev.phase.livean;
 
-import prev.common.report.Report;
-import prev.data.mem.*;
-import prev.data.asm.*;
-import prev.phase.*;
-import prev.phase.asmgen.*;
+import prev.data.asm.AsmInstr;
+import prev.data.asm.AsmLABEL;
+import prev.data.asm.Code;
+import prev.data.mem.MemLabel;
+import prev.data.mem.MemTemp;
+import prev.phase.Phase;
+import prev.phase.asmgen.AsmGen;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,7 +40,7 @@ public class LiveAn extends Phase {
 					// the location it jumps to (or neg/pos)
 					// If instruction is a function call, then the label will be
 					// outside this code block, so continue normally
-					if (instr.jumps().size() > 0 && !instr.toString().startsWith("PUSHJ")) {
+					if (instr.jumps().size() > 0 && !instr.toString().contains("PUSHJ")) {
 						for (MemLabel label : instr.jumps()) {
 							if (labelMap.get(label.name) != null) {
 								instr.addOutTemp(labelMap.get(label.name).in());
