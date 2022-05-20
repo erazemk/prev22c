@@ -104,7 +104,7 @@ public class MMIXTranslator {
 		}
 
 		if (offset < 0) {
-			addInstruction("NEG", "$0,0,$0");
+			addInstruction("NEG", "$0,$0");
 		}
 	}
 
@@ -149,13 +149,13 @@ public class MMIXTranslator {
 		addNewline();
 
 		// Set stack pointer
-		addInstruction("SETH", "$254,7000");
+		addInstruction("Main", "SETH", "$254,7000");
 
 		// Call main
-		addInstruction("Main", "PUSHJ", "$" + nregs + ",_main");
+		addInstruction("PUSHJ", "$" + nregs + ",_main");
 
 		// Copy return value into $255 (used for sending data to system calls)
-		addInstruction("LDA", "$255,$254");
+		addInstruction("LDO", "$255,$254");
 
 		// Exit (exit code is in $255)
 		addInstruction("TRAP", "0,Halt,0");
@@ -165,14 +165,14 @@ public class MMIXTranslator {
 		addNewline();
 
 		// Save old FP
-		loadValue(- code.frame.locsSize - 8, code.frame.label.name); // FP
-		addInstruction("SUB", "$0,$254,$0"); // $0 <- SP - $0
-		addInstruction("STO", "$253,$0,0"); // M[$0] <- FP
+		loadValue(- code.frame.locsSize - 8, code.frame.label.name); // Load FP into $0
+		addInstruction("ADD", "$0,$254,$0"); // $0 <- SP + $0
+		addInstruction("STO", "$253,$254,0"); // M[$0] <- FP
 
 		// Save return address
 		addInstruction("SUB", "$0,$0,8"); // $0 <- ret addr (oldFP - 8)
 		addInstruction("GET", "$1,rJ"); // $1 <- rJ
-		addInstruction("STO", "$1,$0,0"); // M[$0] <- $1
+		addInstruction("STO", "$1,$0,0"); // M[$0] <- rJ
 
 		// Set new FP
 		addInstruction("SET", "$253,$254"); // FP <- SP
@@ -214,25 +214,23 @@ public class MMIXTranslator {
 
 	private void addEpilogue(Code code) {
 		// Save return value
-		//System.out.println("RV: " + code.frame.RV);
 		addInstruction(code.exitLabel.name, "STO",
-			"$" + tempToReg.get(code.frame.RV) + ",$253,0");
+			"$" + tempToReg.get(code.frame.RV) + ",$253,0"); // M[FP] <- RV
+
+		// Restore return address
+		loadValue(- code.frame.locsSize - 16);
+		addInstruction("LDO", "$0,$253,$0"); // $0 <- M[FP + offset]
+		addInstruction("PUT", "rJ,$0"); // RJ <- $0
 
 		// Set SP
 		addInstruction("SET", "$254,$253"); // SP <- FP
 
 		// Restore FP
-		loadValue(- code.frame.locsSize - 8); // FP
-		addInstruction("SUB", "$0,$254,$0"); // $0 <- SP - FP
-		addInstruction("LDO", "$253,$0,0"); // FP <- $0
-
-		// Restore return address
-		addInstruction("SUB", "$0,$0,8"); // FP <- FP - 8
-		addInstruction("LDO", "$0,$0,0"); // FP <- M[$0]
-		addInstruction("PUT", "rJ,$0"); // RJ <- FP
+		loadValue(- code.frame.locsSize - 8); // $0 <- FP
+		addInstruction("LDO", "$253,$253,$0"); // FP <- M[FP + offset]
 
 		// Return from function
-		addInstruction("POP", nregs + ",0");
+		addInstruction("POP", "0,0");
 	}
 
 	private void addStdlib(Code code) {}
