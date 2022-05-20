@@ -116,6 +116,8 @@ public class MMIXTranslator {
 		/*
 		 *  ADD GLOBAL VARIABLES TO DATA SEGMENT
 		 */
+		addInstruction("SP", "GREG", "#6000000000000000");
+		addInstruction("FP", "GREG", "#0");
 		addInstruction("LOC", "Data_Segment");
 		addInstruction("GREG", "@");
 
@@ -149,7 +151,7 @@ public class MMIXTranslator {
 		addNewline();
 
 		// Set stack pointer
-		addInstruction("Main", "SETH", "$254,7000");
+		addInstruction("Main", "SETH", "$254,#7000");
 
 		// Call main
 		addInstruction("PUSHJ", "$" + nregs + ",_main");
@@ -242,14 +244,16 @@ public class MMIXTranslator {
 			if (!instruction.startsWith("\t")) { // Label
 				String label = instruction.split("\t", 2)[0].strip();
 
-				// If previous instruction jumps to this one, remove it
-				String prevInstruction = instructions.get(i-1);
-				if (prevInstruction.contains("JMP")) {
-					String[] text = prevInstruction.split("\t");
-					String jmpLabel = text[text.length - 1].strip();
-					if (label.equals(jmpLabel)) {
-						instructions.remove(prevInstruction);
-						i--; // Fix positioning, since an element was removed
+				if (i > 0) {
+					// If previous instruction jumps to this one, remove it
+					String prevInstruction = instructions.get(i-1);
+					if (prevInstruction.contains("JMP")) {
+						String[] text = prevInstruction.split("\t");
+						String jmpLabel = text[text.length - 1].strip();
+						if (label.equals(jmpLabel)) {
+							instructions.remove(prevInstruction);
+							i--; // Fix positioning, since an element was removed
+						}
 					}
 				}
 			}
