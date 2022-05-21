@@ -4,38 +4,44 @@ nregs = 8
 
 all: help
 
-clean:
-	$(MAKE) -s -C prev22 clean
-	rm -rf out prev22/gen prev22/src/prev/phase/**/.antlr
-
-compile:
-	$(MAKE) -s -C prev22 all
-
-help:
-	@echo "Usage: make [clean|compile|test|zip] (arguments)"
-	@echo
-	@echo "Options:"
-	@echo "    clean                                          Delete artifacts"
-	@echo "    compile                                        Compile the compiler"
-	@echo "    help                                           Print this message"
-	@echo "    test file=<file> nregs=x (phase=<phase>)       Run the specified test"
-	@echo "    zip name=<name>                                Create a zip archive"
-
-test:
+build:
     ifdef file
-		$(MAKE) -s -C prev22 clean all
-		$(MAKE) -s -C prev22/prg "$(file)" PHASE="$(phase)" DEBUG="$(debug)" NREGS="$(nregs)"
+		@$(MAKE) -s -C prev22 clean all
+		@$(MAKE) -s -C prev22/prg "$(file)" PHASE="$(phase)" DEBUG="$(debug)" NREGS="$(nregs)"
     else
 		@echo "Missing test file name!"
-		@echo "Usage: make test file=<file> nregs=x (phase=<phase>) (debug=<bool>)"
+		@$(MAKE) -s help
     endif
+
+clean:
+	@$(MAKE) -s -C prev22 clean
+	@rm -rf out prev22/gen prev22/src/prev/phase/**/.antlr
+
+help:
+	@echo "Usage: make [clean|build|run|zip] (arguments)"
+	@echo
+	@echo "Options:"
+	@echo "    build file=<file>    Compile the program"
+	@echo "      (nregs=x)          The number of registers to use"
+	@echo "      (phase=<phase>)    The phase to compile to (default is 'all')"
+	@echo "      (debug=true)       Enable debug mode"
+	@echo "    clean                Delete artifacts"
+	@echo "    help                 Print this message"
+	@echo "    run file=<file>      Run the program"
+	@echo "      (nregs=x)          The number of registers to use"
+	@echo "    zip name=<name>      Create a zip archive (xxxxxxxx-yy format)"
+
+run:
+	@$(MAKE) -s build file="$(file)" nregs="$(nregs)"
+	@mmixal prev22/prg/$(file).mms
+	@mmix prev22/prg/$(file).mmo
 
 zip:
     ifdef name
-		$(MAKE) -s -C prev22 clean
-		rm -rf out prev22/gen prev22/src/prev/phase/**/.antlr ./*.zip prev22/lib/antlr-*.jar
-		zip -r "$(name).zip" prev22 -x prev22/prev22.iml -x prev22/prg/*.p22
+		@$(MAKE) -s -C prev22 clean
+		@rm -rf out prev22/gen prev22/src/prev/phase/**/.antlr ./*.zip prev22/lib/antlr-*.jar
+		@zip -r "$(name).zip" prev22 -x prev22/prev22.iml -x prev22/prg/*.p22
     else
 		@echo "Zip name must be specified!"
-		@echo "Usage: make zip name=<name>"
+		@$(MAKE) -s help
     endif
