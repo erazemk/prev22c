@@ -29,6 +29,7 @@ public class StmtGenerator implements ImcVisitor<Vector<AsmInstr>, Object> {
 		// If condition is not met (cond = 0) jump to negLabel, else no need to do anything since
 		// posLabel is right behind the conditional check
 		instructions.add(new AsmOPER("BZ `s0," + cjump.negLabel.name, uses, null, jumps));
+		instructions.add(new AsmOPER("JMP " + cjump.posLabel.name, null, null, jumps));
 
 		return instructions;
 	}
