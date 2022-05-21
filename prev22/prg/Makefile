@@ -20,4 +20,5 @@ NREGS = 8
 clean:
 	$(RM) *~
 	$(RM) *xml *html
+	$(RM) *.mmo *.mms
 
