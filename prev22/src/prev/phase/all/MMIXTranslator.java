@@ -91,7 +91,7 @@ public class MMIXTranslator {
 
 	// Create a comment
 	private void addComment(String comment) {
-		instructions.add("\t\t% " + comment + "\n");
+		instructions.add("% " + comment + "\n");
 	}
 
 	private void loadValue(long offset, String label) {
@@ -194,20 +194,20 @@ public class MMIXTranslator {
 
 		// Save old FP
 		loadValue(- code.frame.locsSize - 8, code.frame.label.name); // Load FP into $0
-		addInstruction("ADD", "$0,$254,$0"); // $0 <- SP + $0
-		addInstruction("STO", "$253,$254,0"); // M[$0] <- FP
-
-		// Save return address
-		addInstruction("SUB", "$0,$0,8"); // $0 <- ret addr (oldFP - 8)
-		addInstruction("GET", "$1,rJ"); // $1 <- rJ
-		addInstruction("STO", "$1,$0,0"); // M[$0] <- rJ
+		//addInstruction("ADD", "$0,$254,$0"); // $0 <- SP + $0
+		addInstruction("STO", "$253,$254,$0"); // M[$0] <- FP
 
 		// Set new FP
 		addInstruction("SET", "$253,$254"); // FP <- SP
 
 		// Set new SP
-		loadValue(code.frame.size + code.tempSize); // Actual frame size
-		addInstruction("SUB", "$254,$254,$0");
+		loadValue(- code.frame.size - code.tempSize); // Actual frame size
+		addInstruction("ADD", "$254,$254,$0");
+
+		// Save return address
+		addInstruction("GET", "$1,rJ"); // $1 <- rJ
+		loadValue(- code.frame.locsSize - 16);
+		addInstruction("STO", "$1,$253,$0"); // M[$0] <- rJ
 
 		 // Jump to function body
 		addInstruction("JMP", code.entryLabel.name);
@@ -251,11 +251,12 @@ public class MMIXTranslator {
 		addInstruction("PUT", "rJ,$0"); // RJ <- $0
 
 		// Set SP
-		addInstruction("SET", "$254,$253"); // SP <- FP
+		loadValue(code.frame.size + code.tempSize); // Actual frame size
+		addInstruction("ADD", "$254,$254,$0");
 
 		// Restore FP
 		loadValue(- code.frame.locsSize - 8); // $0 <- FP
-		addInstruction("LDO", "$253,$253,$0"); // FP <- M[FP + offset]
+		addInstruction("LDO", "$253,$254,$0"); // FP <- M[FP + offset]
 
 		// Return from function
 		addInstruction("POP", "0,0");
