@@ -1,18 +1,19 @@
 fun main() : int = {
 	sum = fun1();
-	sum;
+	sum; # Should be 4
 } where {
 	var sum : int
 }
 
 fun fun1() : int = {
-	sum = 0;
+	sum = 1;
 	sum = sum + fun2();
 	sum;
 } where {
 	var sum : int
 
 	fun fun2() : int = {
+		i = 1;
 		1 + 2 * i;
 	} where {
 		var i : int
