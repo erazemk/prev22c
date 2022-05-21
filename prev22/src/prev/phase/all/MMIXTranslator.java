@@ -42,7 +42,9 @@ public class MMIXTranslator {
 			addEpilogue(code);
 		}
 
-		optimization();
+		addStdlib();
+
+		//optimization();
 
 		// Write all instructions to output file
 		writeToFile();
@@ -60,8 +62,19 @@ public class MMIXTranslator {
 			sb.append("\t\t");
 		}
 
-		sb.append(mnemonic).append("\t");
-		if (mnemonic.length() < 4) sb.append("\t");
+		sb.append(mnemonic);
+
+		// Align to 8 chars
+		if (mnemonic.length() == 2) {
+			sb.append("      ");
+		} else if (mnemonic.length() == 3) {
+			sb.append("     ");
+		} else if (mnemonic.length() == 4) {
+			sb.append("    ");
+		} else if (mnemonic.length() == 5) {
+			sb.append("   ");
+		}
+
 		sb.append(params).append("\n");
 		instructions.add(sb.toString());
 	}
@@ -116,10 +129,30 @@ public class MMIXTranslator {
 		/*
 		 *  ADD GLOBAL VARIABLES TO DATA SEGMENT
 		 */
-		addInstruction("SP", "GREG", "#6000000000000000");
-		addInstruction("FP", "GREG", "#0");
+		addComment("Global registers");
+		addInstruction("SP", "GREG", "#6000000000000000"); // Stack pointer
+		addInstruction("FP", "GREG", "#0"); // Frame pointer
+		addInstruction("HP", "GREG", "#3000000000000000"); // Heap pointer
+
+		addNewline();
 		addInstruction("LOC", "Data_Segment");
 		addInstruction("GREG", "@");
+
+		addNewline();
+		addComment("I/O buffers");
+
+		// Set up output buffer (putchar)
+		addInstruction("OutBuf", "BYTE", "0");
+		addInstruction("BYTE", "0"); // Null terminator
+
+		// Set up input buffer (getchar)
+		addInstruction("InSize", "IS", "100");
+		addInstruction("InBuf", "OCTA", "0");
+		addInstruction("LOC", "InBuf+InSize");
+		addInstruction("InArgs", "OCTA", "InBuf,InSize");
+
+		addNewline();
+		addComment("Global variables");
 
 		for (LinDataChunk chunk : ImcLin.dataChunks()) {
 			// If initial value is null, this is a normal variable, otherwise it's a string
@@ -145,22 +178,15 @@ public class MMIXTranslator {
 			}
 		}
 
-		// Start of code segment (prepend newline to have an empty line between data and program)
 		addNewline();
-		addInstruction("LOC", "#100");
+		addInstruction("LOC", "#100"); // Start of code segment
 		addNewline();
 
-		// Set stack pointer
-		addInstruction("Main", "SETH", "$254,#7000");
-
-		// Call main
-		addInstruction("PUSHJ", "$" + nregs + ",_main");
-
-		// Copy return value into $255 (used for sending data to system calls)
-		addInstruction("LDO", "$255,$254");
-
-		// Exit (exit code is in $255)
-		addInstruction("TRAP", "0,Halt,0");
+		addComment("Bootstrap function");
+		addInstruction("Main", "PUT", "rG,251"); // Prevent shifting SP and FP
+		addInstruction("PUSHJ", "$" + nregs + ",_main"); // Call main
+		addInstruction("LDO", "$255,$254"); // Copy return value into $255 (used for sending data to system calls)
+		addInstruction("TRAP", "0,Halt,0"); // Exit (exit code is in $255)
 	}
 
 	private void addPrologue(Code code) {
@@ -235,9 +261,38 @@ public class MMIXTranslator {
 		addInstruction("POP", "0,0");
 	}
 
-	private void addStdlib(Code code) {}
+	private void addStdlib() {
+		addNewline();
+		addComment("Standard library");
 
-	private void optimization() {
+		// New (malloc)
+		addInstruction("_new", "LDO", "$0,SP,8"); // Load malloc size into $0
+		addInstruction("STO", "HP,SP,0"); // Store current HP in stack as return value
+		addInstruction("ADD", "HP,HP,$0"); // Increase HP by malloc size
+		addInstruction("POP", "0,0"); // Return
+
+		// Del (free)
+		addInstruction("_del", "POP", "0,0"); // NOP (just return)
+
+		// Putchar (uses OutBuf to store char)
+		addInstruction("_putc", "LDA", "$255,OutBuf"); // Set $255 to OutBuf address
+		addInstruction("LDO", "$0,SP,8"); // Load char into $0
+		addInstruction("STB", "$0,$255,0"); // Store char in OutBuf
+		addInstruction("TRAP", "0,Fputs,StdOut"); // Call Fputs
+		addInstruction("POP", "0,0"); // Return
+
+		// Getchar (uses InBuffer to read char)
+		addInstruction("_getc", "LDA", "$0,InBuf"); // Set $0 to InBuf address
+		addInstruction("SET", "$1,0"); // Set $1 to 0
+		addInstruction("STO", "$1,$0,0"); // Reset InBuf (set it to 0)
+		addInstruction("LDA", "$255,InArgs"); // Set $255 to InArgs address
+		addInstruction("TRAP", "0,Fgets,StdIn"); // Call Fgets
+		addInstruction("LDB", "$1,$0,0"); // Load char from InBuf into $1
+		addInstruction("STO", "$1,SP,0"); // Store char in SP
+		addInstruction("POP", "0,0"); // Return
+	}
+
+	/*private void optimization() {
 		// Remove unnecessary jumps
 		for (int i = 0; i < instructions.size(); i++) {
 			String instruction = instructions.get(i);
@@ -273,7 +328,7 @@ public class MMIXTranslator {
 				}
 			}
 		}
-	}
+	}*/
 
 	private void writeToFile() {
 		try {
