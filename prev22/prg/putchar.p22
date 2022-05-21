@@ -1,0 +1,19 @@
+fun main() : int = {
+	putc('H');
+	putc('e');
+	putc('l');
+	putc('l');
+	putc('o');
+	putc(',');
+	putc(' ');
+	putc('W');
+	putc('o');
+	putc('r');
+	putc('l');
+	putc('d');
+	putc('!');
+	putc((10 : char));
+	0;
+}
+
+fun putc(c : char) : void

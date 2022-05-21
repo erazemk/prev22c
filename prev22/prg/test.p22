@@ -1,0 +1,12 @@
+var i : int
+
+fun main() : int = {
+	i = 1;
+	i = i + 2 * i;
+	i = i + ('0' : int);
+	putc((i : char));
+	putc((10 : char)); # newline
+	0;
+}
+
+fun putc(c : char) : void

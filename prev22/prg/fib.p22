@@ -19,7 +19,3 @@ where {
 		}
 	}
 }
-fun putInt(x : int) : void = {
-	putChar(((x + ('0': int)) : char));
-}
-fun putChar(c : char) : void

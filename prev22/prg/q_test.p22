@@ -1,0 +1,85 @@
+var N : int
+var positions : ^[8]int
+
+fun main() : void = {
+    N = 10;
+	#positions^[0] = 42;
+	positions^[2] = 42;
+	printArr(^positions);
+	printLn(intToStr(positions^[2]));
+    none;
+}
+
+
+# functions for printing
+
+fun printArr(arr : ^[8]int) : void = {
+    e = -1;
+    while {e = e + 1; e < 8; } do {
+        printInt(e);
+        print(intToStr(arr^[e]));
+        print(",");
+        #printInt(arr^[e]);
+    };
+    putChar((10 : char));
+} where {
+    var e : int
+}
+    
+
+fun putChar(c : char) : void
+
+fun strIndex(s : ^char, i : int) : char = ((s:int)+8*i : ^char)^
+fun setChar(s : ^char, i : int, c : char) : void = {
+	((s:int)+8*i : ^char)^ = c;
+}
+
+fun print(s : ^char) : void = {
+	i = 0;
+	while {c = strIndex(s, i); i = i+1; c != (0 : char);} do {
+		putChar(c);
+	};
+} where {
+	var i : int
+	var c : char
+}
+
+fun printLn(s : ^char) : void = {
+	print(s);
+	putChar((10 : char));
+}
+
+fun intToStr(i : int) : ^char = {
+	n = log10(i);
+	string = (new (n+1) : ^char);
+	sEnd = itStr(i, string);
+	sEnd^ = (0 : char);
+	string;
+} where {
+	var string : ^char
+	var sEnd : ^char
+	var n : int
+}
+
+fun log10(i : int) : int = {
+	if i < 10 then
+		i = 0
+	else
+		i = log10(i/10) + 1;
+	i;
+}
+
+fun itStr(i : int, s : ^char) : ^char = {
+	digit = i % 10;
+	if i >= 10 then {
+		s = itStr(i/10, s);
+	} else none;
+	s^ = intToChar(digit);
+	((s : int)+8 : ^char);
+} where {
+	var digit : int
+}
+
+fun intToChar(i : int) : char = (i+('0' : int) : char)
+
+fun printInt(i : int) : void = printLn(intToStr(i))

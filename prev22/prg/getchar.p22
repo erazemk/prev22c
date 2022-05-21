@@ -1,0 +1,10 @@
+fun main() : int = {
+	c = getc();
+	putc(c);
+	0;
+} where {
+	var c : char
+}
+
+fun getc() : char
+fun putc(c : char) : void
