@@ -101,7 +101,7 @@ ERR_UNESCAPED_QUOTE: '\'''\'''\'' {
 		);
 	}
 };
-ERR_UNTERMINATED_CHAR: '\''([ -&]|[(-~]|'\\\'')*('\n'|EOF) {
+ERR_UNTERMINATED_CHAR: '\'' ' '..'~'? ' '..'~'? {
 	if (true) {
 		new Report.Error(new Location(_tokenStartLine,
 			_tokenStartCharPositionInLine, getLine(), getCharPositionInLine()),
