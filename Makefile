@@ -1,6 +1,7 @@
 phase = all
 debug =
 nregs = 8
+nolink = false
 
 all: help
 
@@ -32,9 +33,21 @@ help:
 	@echo "    zip name=<name>      Create a zip archive (xxxxxxxx-yy format)"
 
 run:
-	@$(MAKE) -s build file="$(file)" nregs="$(nregs)"
-	@mmixal prev22/prg/$(file).mms
-	@mmix prev22/prg/$(file).mmo
+    ifdef file
+		@$(MAKE) -s -C prev22 clean all
+		@cp prev22/prg/"$(file)".p22 prev22/prg/temp_"$(file)".p22
+
+        ifneq ($(nolink), true)
+			@cat prev22/prg/stdlib.p22 >> prev22/prg/temp_"$(file)".p22
+        endif
+
+		@$(MAKE) -s -C prev22/prg temp_"$(file)" PHASE="$(phase)" DEBUG="$(debug)" NREGS="$(nregs)"
+		@mmixal -x prev22/prg/temp_"$(file)".mms
+		@mmix prev22/prg/temp_"$(file)".mmo
+    else
+		@echo "Missing file name!"
+		@$(MAKE) -s help
+    endif
 
 zip:
     ifdef name
