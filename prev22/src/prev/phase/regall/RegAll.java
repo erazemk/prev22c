@@ -60,13 +60,14 @@ public class RegAll extends Phase {
 	public void allocate() {
 		for (Code code : AsmGen.codes) {
 
-			// Re-do liveness analysis
-			LiveAn liveAn = new LiveAn();
-			liveAn.compLifetimes();
-
 			// Try building and coloring a graph until it succeeds
 			Graph finalGraph = new Graph();
 			do {
+				// Re-do liveness analysis
+				try (LiveAn liveAn = new LiveAn()) {
+					liveAn.compLifetimes();
+				}
+
 				Graph graph = new Graph();
 
 				// Add all variables to graph
