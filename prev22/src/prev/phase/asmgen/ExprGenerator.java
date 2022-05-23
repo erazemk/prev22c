@@ -192,7 +192,7 @@ public class ExprGenerator implements ImcVisitor<MemTemp, Vector<AsmInstr>> {
 			case NEG -> new AsmOPER("NEG `d0,`s0", uses, defs, null);
 
 			// Docs: http://mmix.cs.hm.edu/doc/instructions-en.html#Bit_Operations
-			case NOT -> new AsmOPER("NAND `d0,`s0,1", uses, defs, null);
+			case NOT -> new AsmOPER("XOR `d0,`s0,1", uses, defs, null);
 		});
 
 		return dst;
