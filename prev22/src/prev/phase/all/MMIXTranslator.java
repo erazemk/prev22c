@@ -157,24 +157,27 @@ public class MMIXTranslator {
 		for (LinDataChunk chunk : ImcLin.dataChunks()) {
 			// If initial value is null, this is a normal variable, otherwise it's a string
 			if (chunk.init == null) {
-				String sizeStr;
+				addInstruction(chunk.label.name, "OCTA", "0");
+			} else {
+				// Append null terminator to string
 
-				// Reserve proper amount of space for variables
-				if (chunk.size < 1) {
-					sizeStr = "BYTE";
-				} else if (chunk.size < 2) {
-					sizeStr = "WYDE";
-				} else if (chunk.size < 4) {
-					sizeStr = "TETRA";
+				// Fix double quotes in string
+				String value;
+				if (chunk.init.contains("\"")) {
+					value = chunk.init.replace("\"", "\",34,\"");
+
+					// If string ends with double quote, remove last comma
+					// Add null terminator and surrounding quotes
+					if (value.endsWith(",34,\"")) {
+						value = "\"" + value.substring(0, value.length() - 2) + ",0";
+					} else {
+						value = "\"" + value + "\",0";
+					}
 				} else {
-					sizeStr = "OCTA";
+					value = "\"" + chunk.init + "\",0";
 				}
 
-				addInstruction(chunk.label.name, sizeStr, "0");
-			} else {
-				// Append newline and null terminator to string
-				addInstruction(chunk.label.name, "BYTE", "\"" + chunk.init +
-					"\",10,0");
+				addInstruction(chunk.label.name, "OCTA", value);
 			}
 		}
 
@@ -276,14 +279,14 @@ public class MMIXTranslator {
 		addInstruction("_del", "POP", "0,0"); // NOP (just return)
 
 		// Putchar (uses OutBuf to store char)
-		addInstruction("_putc", "LDA", "$255,OutBuf"); // Set $255 to OutBuf address
+		addInstruction("_putChar", "LDA", "$255,OutBuf"); // Set $255 to OutBuf address
 		addInstruction("LDO", "$0,SP,8"); // Load char into $0
 		addInstruction("STB", "$0,$255,0"); // Store char in OutBuf
 		addInstruction("TRAP", "0,Fputs,StdOut"); // Call Fputs
 		addInstruction("POP", "0,0"); // Return
 
 		// Getchar (uses InBuffer to read char)
-		addInstruction("_getc", "LDA", "$0,InBuf"); // Set $0 to InBuf address
+		addInstruction("_getChar", "LDA", "$0,InBuf"); // Set $0 to InBuf address
 		addInstruction("SET", "$1,0"); // Set $1 to 0
 		addInstruction("STO", "$1,$0,0"); // Reset InBuf (set it to 0)
 		addInstruction("LDA", "$255,InArgs"); // Set $255 to InArgs address
