@@ -1,0 +1,198 @@
+# Expected:
+# -YN-
+# ... then a list of "Y"s
+
+fun main(): int = {
+    cond = true;
+
+    yes = 'Y';
+    no = 'N';
+
+    putChar('-');
+    putChar(yes);
+    putChar(no);
+    putChar('-');
+    newLine();
+
+    value = 0;
+    if value == 0 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if value != 0 then
+    	putChar(no)
+    else
+    	putChar(yes)
+    ;
+    newLine();
+
+    if value != 22 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if value == 22 then
+    	putChar(no)
+    else
+    	putChar(yes)
+    ;
+    newLine();
+
+    value = 5531;
+    if value < 6000 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if 6000 < value then
+    	putChar(no)
+    else
+    	putChar(yes)
+    ;
+    newLine();
+
+    if value <= 5531 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if value <= -11 then
+    	putChar(no)
+    else
+    	putChar(yes)
+    ;
+    newLine();
+
+    if value > 10 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if value >= 5531 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if value >= 5000 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if value >= 8000 then
+    	putChar(no)
+    else
+    	putChar(yes)
+    ;
+    newLine();
+
+    if value < 9000 & value > 11 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if value < 1 & value > 11 then
+    	putChar(no)
+    else
+    	putChar(yes)
+    ;
+    newLine();
+
+    if value == 12 | value == 55 then
+    	putChar(no)
+    else
+    	putChar(yes)
+    ;
+    newLine();
+
+    if value == 55 | value == 5531 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    cond = true;
+
+    if cond then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if !cond then
+    	putChar(no)
+    else
+    	putChar(yes)
+    ;
+    newLine();
+
+    value = 1;
+
+    if value * 2 == 2 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    value = 12;
+
+    if value % 10 == 2 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if value % 10 == 6 then
+    	putChar(no)
+    else
+    	putChar(yes)
+    ;
+    newLine();
+
+    cond = true;
+    cond2 = false;
+
+    if cond & !cond2 then
+    	putChar(yes)
+    else
+    	putChar(no)
+    ;
+    newLine();
+
+    if cond2 & cond then
+    	putChar(no)
+    else
+    	putChar(yes)
+    ;
+    newLine();
+
+    0;
+} where {
+    var yes: char
+    var no: char
+    var cond: bool
+    var cond2: bool
+    var value: int
+}
+
+fun newLine(): void = putChar(nl())

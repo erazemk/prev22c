@@ -1,0 +1,37 @@
+var msg : ^char
+
+fun main() : void = {
+	msg = "Number: ";
+	printf1(msg, nil);
+
+	# Get number from user
+	getString(^buf);
+	n = parseInt(^buf[0]);
+	a = 0;
+	b = 1;
+
+	# Calculate n-th fibonacci number
+	if (n < 2) then {
+		putInt(n);
+	} else {
+		i = 2;
+
+		while { i <= n; } do {
+			c = a + b;
+			a = b;
+			b = c;
+			i = i + 1;
+		};
+
+		putInt(b);
+	};
+
+	putChar(nl());
+} where {
+	var i : int
+	var a : int
+	var b : int
+	var c : int
+	var n : int
+	var buf : [10]char
+}

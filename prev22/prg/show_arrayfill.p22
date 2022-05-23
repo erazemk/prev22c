@@ -1,0 +1,24 @@
+fun main() : void = {
+	fill(^arr);
+
+	j = 0;
+	while { j < 10; } do {
+		putChar(toChar(arr[j]));
+		j = j + 1;
+	};
+
+	putChar(nl());
+} where {
+	var arr : [10]int
+	var j : int
+}
+
+fun fill(arr : ^[10]int) : void = {
+	i = 0;
+	while { i < 10; } do {
+		arr^[i] = i;
+		i = i + 1;
+	};
+} where {
+	var i : int
+}

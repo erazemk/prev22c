@@ -2,6 +2,16 @@ var N : int
 
 fun main() : void = {
 	N = 8;
+
+	# positions[0] = -1;
+	# positions[1] = -1;
+	# positions[2] = -1;
+	# positions[3] = -1;
+	# positions[4] = -1;
+	# positions[5] = -1;
+	# positions[6] = -1;
+	# positions[7] = -1;
+
 	queens(^positions, 0);
 	printBoard(^positions);
 	none;
@@ -10,7 +20,8 @@ fun main() : void = {
 }
 
 fun queens(positions : ^[8]int, currentQueen : int) : bool = {
-	if currentQueen == N then true
+	if currentQueen == N then
+		finished = true
 	else {
 		i = 0;
 		finished = false;
@@ -37,6 +48,7 @@ fun queens(positions : ^[8]int, currentQueen : int) : bool = {
 			i = i + 1;
 		};
 	};
+
 	finished;
 }
 where {
@@ -85,8 +97,6 @@ fun printBoard(board : ^[8]int) : void = {
 	var i : int
 	var j : int
 }
-
-fun putChar(c : char) : void
 
 fun strIndex(s : ^char, i : int) : char = ((s:int)+8*i : ^char)^
 fun setChar(s : ^char, i : int, c : char) : void = {
