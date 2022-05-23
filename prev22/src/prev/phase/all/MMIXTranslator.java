@@ -142,11 +142,11 @@ public class MMIXTranslator {
 		addComment("I/O buffers");
 
 		// Set up output buffer (putchar)
-		addInstruction("OutBuf", "BYTE", "0");
-		addInstruction("BYTE", "0"); // Null terminator
+		addInstruction("OutBuf", "OCTA", "0");
+		addInstruction("OCTA", "0"); // Null terminator
 
 		// Set up input buffer (getchar)
-		addInstruction("InSize", "IS", "100");
+		addInstruction("InSize", "IS", "2");
 		addInstruction("InBuf", "OCTA", "0");
 		addInstruction("LOC", "InBuf+InSize");
 		addInstruction("InArgs", "OCTA", "InBuf,InSize");
